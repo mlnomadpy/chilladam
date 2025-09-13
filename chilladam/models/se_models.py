@@ -104,6 +104,107 @@ class BasicYATBlock(nn.Module):
         return out
 
 
+class BottleneckStandardBlock(nn.Module):
+    """A bottleneck residual block for the StandardConvNet, inspired by ResNet-50, with Squeeze-and-Excitation."""
+    expansion = 4
+
+    def __init__(self, in_planes, planes, stride=1):
+        super(BottleneckStandardBlock, self).__init__()
+        self.conv1 = nn.Conv2d(in_planes, planes, kernel_size=1, bias=False)
+        self.bn1 = nn.BatchNorm2d(planes)
+        self.conv2 = nn.Conv2d(planes, planes, kernel_size=3, stride=stride, padding=1, bias=False)
+        self.bn2 = nn.BatchNorm2d(planes)
+        self.conv3 = nn.Conv2d(planes, self.expansion * planes, kernel_size=1, bias=False)
+        self.bn3 = nn.BatchNorm2d(self.expansion * planes)
+        self.se = SELayer(self.expansion * planes)
+
+        self.shortcut = nn.Sequential()
+        if stride != 1 or in_planes != self.expansion * planes:
+            self.shortcut = nn.Sequential(
+                nn.Conv2d(in_planes, self.expansion * planes, kernel_size=1, stride=stride, bias=False),
+                nn.BatchNorm2d(self.expansion * planes)
+            )
+
+    def forward(self, x):
+        out = F.relu(self.bn1(self.conv1(x)))
+        out = F.relu(self.bn2(self.conv2(out)))
+        out = self.bn3(self.conv3(out))
+        out = self.se(out)  # Apply Squeeze-and-Excitation
+        out += self.shortcut(x)
+        out = F.relu(out)
+        return out
+
+
+class BottleneckYATBlock(nn.Module):
+    """A bottleneck residual block for the YATConvNet, with Squeeze-and-Excitation."""
+    expansion = 4
+
+    def __init__(self, in_planes, planes, stride=1, use_alpha=True, use_dropconnect=False, drop_rate=0.1):
+        super(BottleneckYATBlock, self).__init__()
+        self.yat_conv1 = YatConv2d(in_planes, planes, kernel_size=1, stride=1, padding=0,
+                                   use_alpha=use_alpha, use_dropconnect=use_dropconnect,
+                                   drop_rate=drop_rate, bias=False, epsilon=0.007)
+        self.yat_conv2 = YatConv2d(planes, planes, kernel_size=3, stride=stride, padding=1,
+                                   use_alpha=use_alpha, use_dropconnect=use_dropconnect,
+                                   drop_rate=drop_rate, bias=False, epsilon=0.007)
+        self.lin_conv = nn.Conv2d(planes, self.expansion * planes, kernel_size=1, stride=1, padding=0, bias=False)
+        self.se = YatSELayer(self.expansion * planes)
+
+        self.shortcut = nn.Sequential()
+        if stride != 1 or in_planes != self.expansion * planes:
+            self.shortcut = nn.Sequential(
+                nn.Conv2d(in_planes, self.expansion * planes, kernel_size=1, stride=stride, bias=False),
+            )
+
+    def forward(self, x):
+        identity = self.shortcut(x)
+        out = self.yat_conv1(x, deterministic=not self.training)
+        out = self.yat_conv2(out, deterministic=not self.training)
+        out = self.lin_conv(out)
+        out = self.se(out)  # Apply Squeeze-and-Excitation
+        out += identity
+        return out
+
+
+class BottleneckYATBlockNoSE(nn.Module):
+    """A bottleneck residual block for the YATConvNet, without Squeeze-and-Excitation, with LayerNorm after skip connection."""
+    expansion = 4
+
+    def __init__(self, in_planes, planes, stride=1, use_alpha=True, use_dropconnect=False, drop_rate=0.1):
+        super(BottleneckYATBlockNoSE, self).__init__()
+        self.yat_conv1 = YatConv2d(in_planes, planes, kernel_size=1, stride=1, padding=0,
+                                   use_alpha=use_alpha, use_dropconnect=use_dropconnect,
+                                   drop_rate=drop_rate, bias=False, epsilon=0.007)
+        self.yat_conv2 = YatConv2d(planes, planes, kernel_size=3, stride=stride, padding=1,
+                                   use_alpha=use_alpha, use_dropconnect=use_dropconnect,
+                                   drop_rate=drop_rate, bias=False, epsilon=0.007)
+        self.lin_conv = nn.Conv2d(planes, self.expansion * planes, kernel_size=1, stride=1, padding=0, bias=False)
+        
+        # LayerNorm for post-skip connection normalization
+        self.layer_norm = nn.LayerNorm(self.expansion * planes)
+
+        self.shortcut = nn.Sequential()
+        if stride != 1 or in_planes != self.expansion * planes:
+            self.shortcut = nn.Sequential(
+                nn.Conv2d(in_planes, self.expansion * planes, kernel_size=1, stride=stride, bias=False),
+            )
+
+    def forward(self, x):
+        identity = self.shortcut(x)
+        out = self.yat_conv1(x, deterministic=not self.training)
+        out = self.yat_conv2(out, deterministic=not self.training)
+        out = self.lin_conv(out)
+        out += identity
+        
+        # Apply LayerNorm after skip connection
+        b, c, h, w = out.size()
+        out = out.permute(0, 2, 3, 1)  # (N, H, W, C)
+        out = self.layer_norm(out)     # Apply LayerNorm over channel dimension
+        out = out.permute(0, 3, 1, 2)  # Back to (N, C, H, W)
+        
+        return out
+
+
 class BasicYATBlockNoSE(nn.Module):
     """A basic residual block for the YATConvNet, without Squeeze-and-Excitation, with LayerNorm after skip connection."""
     expansion = 1
@@ -215,8 +316,10 @@ class YATConvNet(nn.Module):
         return out
 
 
-# Factory functions for creating predefined models
-def standard_se_resnet18(num_classes=10):
+# Factory functions for creating predefined models with improved naming
+
+# Standard ResNet models with Squeeze-and-Excitation (SE)
+def se_resnet18(num_classes=10):
     """
     Standard ResNet-18 with Squeeze-and-Excitation blocks.
     
@@ -226,7 +329,7 @@ def standard_se_resnet18(num_classes=10):
     return StandardConvNet(BasicStandardBlock, [2, 2, 2, 2], num_classes=num_classes)
 
 
-def standard_se_resnet34(num_classes=10):
+def se_resnet34(num_classes=10):
     """
     Standard ResNet-34 with Squeeze-and-Excitation blocks.
     
@@ -236,7 +339,18 @@ def standard_se_resnet34(num_classes=10):
     return StandardConvNet(BasicStandardBlock, [3, 4, 6, 3], num_classes=num_classes)
 
 
-def yat_resnet18(num_classes=200, use_alpha=True, use_dropconnect=False, drop_rate=0.1):
+def se_resnet50(num_classes=10):
+    """
+    Standard ResNet-50 with Squeeze-and-Excitation blocks.
+    
+    Arguments:
+        num_classes: number of output classes
+    """
+    return StandardConvNet(BottleneckStandardBlock, [3, 4, 6, 3], num_classes=num_classes)
+
+
+# YAT ResNet models with Squeeze-and-Excitation (SE) - these are the current yat_resnet* functions
+def yat_se_resnet18(num_classes=200, use_alpha=True, use_dropconnect=False, drop_rate=0.1):
     """
     YAT-based ResNet-18 with Squeeze-and-Excitation blocks.
     
@@ -253,7 +367,7 @@ def yat_resnet18(num_classes=200, use_alpha=True, use_dropconnect=False, drop_ra
                       drop_rate=drop_rate)
 
 
-def yat_resnet34(num_classes=200, use_alpha=True, use_dropconnect=False, drop_rate=0.1):
+def yat_se_resnet34(num_classes=200, use_alpha=True, use_dropconnect=False, drop_rate=0.1):
     """
     YAT-based ResNet-34 with Squeeze-and-Excitation blocks.
     
@@ -270,7 +384,25 @@ def yat_resnet34(num_classes=200, use_alpha=True, use_dropconnect=False, drop_ra
                       drop_rate=drop_rate)
 
 
-def yat_resnet18_no_se(num_classes=200, use_alpha=True, use_dropconnect=False, drop_rate=0.1):
+def yat_se_resnet50(num_classes=200, use_alpha=True, use_dropconnect=False, drop_rate=0.1):
+    """
+    YAT-based ResNet-50 with Squeeze-and-Excitation blocks.
+    
+    Arguments:
+        num_classes: number of output classes
+        use_alpha: whether to use alpha scaling in YAT layers
+        use_dropconnect: whether to use DropConnect in YAT layers
+        drop_rate: dropout rate for DropConnect
+    """
+    return YATConvNet(BottleneckYATBlock, [3, 4, 6, 3], 
+                      num_classes=num_classes,
+                      use_alpha=use_alpha,
+                      use_dropconnect=use_dropconnect,
+                      drop_rate=drop_rate)
+
+
+# YAT ResNet models without Squeeze-and-Excitation (plain YAT) - these are the current yat_resnet*_no_se functions
+def yat_resnet18_plain(num_classes=200, use_alpha=True, use_dropconnect=False, drop_rate=0.1):
     """
     YAT-based ResNet-18 without Squeeze-and-Excitation blocks, with LayerNorm after skip connection.
     
@@ -287,7 +419,7 @@ def yat_resnet18_no_se(num_classes=200, use_alpha=True, use_dropconnect=False, d
                       drop_rate=drop_rate)
 
 
-def yat_resnet34_no_se(num_classes=200, use_alpha=True, use_dropconnect=False, drop_rate=0.1):
+def yat_resnet34_plain(num_classes=200, use_alpha=True, use_dropconnect=False, drop_rate=0.1):
     """
     YAT-based ResNet-34 without Squeeze-and-Excitation blocks, with LayerNorm after skip connection.
     
@@ -302,3 +434,135 @@ def yat_resnet34_no_se(num_classes=200, use_alpha=True, use_dropconnect=False, d
                       use_alpha=use_alpha,
                       use_dropconnect=use_dropconnect,
                       drop_rate=drop_rate)
+
+
+def yat_resnet50_plain(num_classes=200, use_alpha=True, use_dropconnect=False, drop_rate=0.1):
+    """
+    YAT-based ResNet-50 without Squeeze-and-Excitation blocks, with LayerNorm after skip connection.
+    
+    Arguments:
+        num_classes: number of output classes
+        use_alpha: whether to use alpha scaling in YAT layers
+        use_dropconnect: whether to use DropConnect in YAT layers
+        drop_rate: dropout rate for DropConnect
+    """
+    return YATConvNet(BottleneckYATBlockNoSE, [3, 4, 6, 3], 
+                      num_classes=num_classes,
+                      use_alpha=use_alpha,
+                      use_dropconnect=use_dropconnect,
+                      drop_rate=drop_rate)
+
+
+# Current naming (maintained for backward compatibility)
+def standard_se_resnet18(num_classes=10):
+    """
+    Standard ResNet-18 with Squeeze-and-Excitation blocks.
+    
+    Arguments:
+        num_classes: number of output classes
+    """
+    return se_resnet18(num_classes=num_classes)
+
+
+def standard_se_resnet34(num_classes=10):
+    """
+    Standard ResNet-34 with Squeeze-and-Excitation blocks.
+    
+    Arguments:
+        num_classes: number of output classes
+    """
+    return se_resnet34(num_classes=num_classes)
+
+
+def standard_se_resnet50(num_classes=10):
+    """
+    Standard ResNet-50 with Squeeze-and-Excitation blocks.
+    
+    Arguments:
+        num_classes: number of output classes
+    """
+    return se_resnet50(num_classes=num_classes)
+
+
+def yat_resnet18(num_classes=200, use_alpha=True, use_dropconnect=False, drop_rate=0.1):
+    """
+    YAT-based ResNet-18 with Squeeze-and-Excitation blocks.
+    
+    Arguments:
+        num_classes: number of output classes
+        use_alpha: whether to use alpha scaling in YAT layers
+        use_dropconnect: whether to use DropConnect in YAT layers
+        drop_rate: dropout rate for DropConnect
+    """
+    return yat_se_resnet18(num_classes=num_classes, use_alpha=use_alpha,
+                           use_dropconnect=use_dropconnect, drop_rate=drop_rate)
+
+
+def yat_resnet34(num_classes=200, use_alpha=True, use_dropconnect=False, drop_rate=0.1):
+    """
+    YAT-based ResNet-34 with Squeeze-and-Excitation blocks.
+    
+    Arguments:
+        num_classes: number of output classes
+        use_alpha: whether to use alpha scaling in YAT layers
+        use_dropconnect: whether to use DropConnect in YAT layers
+        drop_rate: dropout rate for DropConnect
+    """
+    return yat_se_resnet34(num_classes=num_classes, use_alpha=use_alpha,
+                           use_dropconnect=use_dropconnect, drop_rate=drop_rate)
+
+
+def yat_resnet50(num_classes=200, use_alpha=True, use_dropconnect=False, drop_rate=0.1):
+    """
+    YAT-based ResNet-50 with Squeeze-and-Excitation blocks.
+    
+    Arguments:
+        num_classes: number of output classes
+        use_alpha: whether to use alpha scaling in YAT layers
+        use_dropconnect: whether to use DropConnect in YAT layers
+        drop_rate: dropout rate for DropConnect
+    """
+    return yat_se_resnet50(num_classes=num_classes, use_alpha=use_alpha,
+                           use_dropconnect=use_dropconnect, drop_rate=drop_rate)
+
+
+def yat_resnet18_no_se(num_classes=200, use_alpha=True, use_dropconnect=False, drop_rate=0.1):
+    """
+    YAT-based ResNet-18 without Squeeze-and-Excitation blocks, with LayerNorm after skip connection.
+    
+    Arguments:
+        num_classes: number of output classes
+        use_alpha: whether to use alpha scaling in YAT layers
+        use_dropconnect: whether to use DropConnect in YAT layers
+        drop_rate: dropout rate for DropConnect
+    """
+    return yat_resnet18_plain(num_classes=num_classes, use_alpha=use_alpha,
+                              use_dropconnect=use_dropconnect, drop_rate=drop_rate)
+
+
+def yat_resnet34_no_se(num_classes=200, use_alpha=True, use_dropconnect=False, drop_rate=0.1):
+    """
+    YAT-based ResNet-34 without Squeeze-and-Excitation blocks, with LayerNorm after skip connection.
+    
+    Arguments:
+        num_classes: number of output classes
+        use_alpha: whether to use alpha scaling in YAT layers
+        use_dropconnect: whether to use DropConnect in YAT layers
+        drop_rate: dropout rate for DropConnect
+    """
+    return yat_resnet34_plain(num_classes=num_classes, use_alpha=use_alpha,
+                              use_dropconnect=use_dropconnect, drop_rate=drop_rate)
+
+
+def yat_resnet50_no_se(num_classes=200, use_alpha=True, use_dropconnect=False, drop_rate=0.1):
+    """
+    YAT-based ResNet-50 without Squeeze-and-Excitation blocks, with LayerNorm after skip connection.
+    
+    Arguments:
+        num_classes: number of output classes
+        use_alpha: whether to use alpha scaling in YAT layers
+        use_dropconnect: whether to use DropConnect in YAT layers
+        drop_rate: dropout rate for DropConnect
+    """
+    return yat_resnet50_plain(num_classes=num_classes, use_alpha=use_alpha,
+                              use_dropconnect=use_dropconnect, drop_rate=drop_rate)
