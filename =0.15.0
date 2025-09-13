@@ -1,0 +1,68 @@
+Defaulting to user installation because normal site-packages is not writeable
+Collecting wandb
+  Downloading wandb-0.21.4-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata
+     - 10.2 kB 177.3 kB/s 0:00:00
+Requirement already satisfied: click>=8.0.1 in /usr/lib/python3/dist-packages (from wandb) (8.1.6)
+Collecting gitpython!=3.1.29,>=1.0.0 (from wandb)
+  Downloading gitpython-3.1.45-py3-none-any.whl.metadata
+     - 13.5 kB 118.0 MB/s 0:00:00
+Requirement already satisfied: packaging in /usr/lib/python3/dist-packages (from wandb) (24.0)
+Requirement already satisfied: platformdirs in /usr/local/lib/python3.12/dist-packages (from wandb) (4.4.0)
+Collecting protobuf!=4.21.0,!=5.28.0,<7,>=3.19.0 (from wandb)
+  Downloading protobuf-6.32.1-cp39-abi3-manylinux2014_x86_64.whl.metadata
+     - 593 bytes ? 0:00:00
+Collecting pydantic<3 (from wandb)
+  Downloading pydantic-2.11.8-py3-none-any.whl.metadata
+     - 68.2 kB 193.2 MB/s 0:00:00
+Requirement already satisfied: pyyaml in /usr/lib/python3/dist-packages (from wandb) (6.0.1)
+Requirement already satisfied: requests<3,>=2.0.0 in /home/runner/.local/lib/python3.12/site-packages (from wandb) (2.32.5)
+Collecting sentry-sdk>=2.0.0 (from wandb)
+  Downloading sentry_sdk-2.37.1-py2.py3-none-any.whl.metadata
+     - 10.4 kB 5.6 MB/s 0:00:00
+Requirement already satisfied: typing-extensions<5,>=4.8 in /usr/lib/python3/dist-packages (from wandb) (4.10.0)
+Collecting gitdb<5,>=4.0.1 (from gitpython!=3.1.29,>=1.0.0->wandb)
+  Downloading gitdb-4.0.12-py3-none-any.whl.metadata
+     - 1.2 kB ? 0:00:00
+Collecting annotated-types>=0.6.0 (from pydantic<3->wandb)
+  Downloading annotated_types-0.7.0-py3-none-any.whl.metadata
+     - 15.0 kB 148.6 MB/s 0:00:00
+Collecting pydantic-core==2.33.2 (from pydantic<3->wandb)
+  Downloading pydantic_core-2.33.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata
+     - 6.8 kB ? 0:00:00
+Collecting typing-extensions<5,>=4.8 (from wandb)
+  Downloading typing_extensions-4.15.0-py3-none-any.whl.metadata
+     - 3.3 kB ? 0:00:00
+Collecting typing-inspection>=0.4.0 (from pydantic<3->wandb)
+  Downloading typing_inspection-0.4.1-py3-none-any.whl.metadata
+     - 2.6 kB ? 0:00:00
+Requirement already satisfied: charset_normalizer<4,>=2 in /home/runner/.local/lib/python3.12/site-packages (from requests<3,>=2.0.0->wandb) (3.4.3)
+Requirement already satisfied: idna<4,>=2.5 in /usr/lib/python3/dist-packages (from requests<3,>=2.0.0->wandb) (3.6)
+Requirement already satisfied: urllib3<3,>=1.21.1 in /usr/lib/python3/dist-packages (from requests<3,>=2.0.0->wandb) (2.0.7)
+Requirement already satisfied: certifi>=2017.4.17 in /usr/lib/python3/dist-packages (from requests<3,>=2.0.0->wandb) (2023.11.17)
+Collecting smmap<6,>=3.0.1 (from gitdb<5,>=4.0.1->gitpython!=3.1.29,>=1.0.0->wandb)
+  Downloading smmap-5.0.2-py3-none-any.whl.metadata
+     - 4.3 kB ? 0:00:00
+Downloading wandb-0.21.4-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+   \ 19.6 MB 206.6 MB/s 0:00:00
+Downloading gitpython-3.1.45-py3-none-any.whl
+   - 208.2 kB 158.7 MB/s 0:00:00
+Downloading protobuf-6.32.1-cp39-abi3-manylinux2014_x86_64.whl
+   - 322.0 kB 177.8 MB/s 0:00:00
+Downloading pydantic-2.11.8-py3-none-any.whl
+   - 444.8 kB 167.3 MB/s 0:00:00
+Downloading pydantic_core-2.33.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+   - 2.0 MB 221.9 MB/s 0:00:00
+Downloading sentry_sdk-2.37.1-py2.py3-none-any.whl
+   - 368.3 kB 182.8 MB/s 0:00:00
+Downloading typing_extensions-4.15.0-py3-none-any.whl
+   - 44.6 kB 163.2 MB/s 0:00:00
+Downloading annotated_types-0.7.0-py3-none-any.whl
+   - 13.6 kB 144.9 MB/s 0:00:00
+Downloading gitdb-4.0.12-py3-none-any.whl
+   - 62.8 kB 137.8 MB/s 0:00:00
+Downloading typing_inspection-0.4.1-py3-none-any.whl
+   - 14.6 kB 92.0 MB/s 0:00:00
+Downloading smmap-5.0.2-py3-none-any.whl
+   - 24.3 kB 174.2 MB/s 0:00:00
+Installing collected packages: typing-extensions, smmap, sentry-sdk, protobuf, annotated-types, typing-inspection, pydantic-core, gitdb, pydantic, gitpython, wandb
+Successfully installed annotated-types-0.7.0 gitdb-4.0.12 gitpython-3.1.45 protobuf-6.32.1 pydantic-2.11.8 pydantic-core-2.33.2 sentry-sdk-2.37.1 smmap-5.0.2 typing-extensions-4.15.0 typing-inspection-0.4.1 wandb-0.21.4

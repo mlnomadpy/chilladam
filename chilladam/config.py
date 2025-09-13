@@ -28,6 +28,11 @@ class Config:
         self.eps = 1e-8
         self.betas = (0.9, 0.999)
         self.weight_decay = 0
+        
+        # Wandb configuration
+        self.use_wandb = False
+        self.wandb_project = "chilladam-training"
+        self.wandb_run_name = None
 
 
 def parse_args():
@@ -69,6 +74,14 @@ def parse_args():
     parser.add_argument("--image-size", type=int, default=None,
                        help="Image size for resizing (auto-detected based on dataset if not specified)")
     
+    # Wandb arguments
+    parser.add_argument("--use-wandb", action="store_true",
+                       help="Enable Weights & Biases logging")
+    parser.add_argument("--wandb-project", type=str, default="chilladam-training",
+                       help="Wandb project name")
+    parser.add_argument("--wandb-run-name", type=str, default=None,
+                       help="Wandb run name (auto-generated if not specified)")
+    
     args = parser.parse_args()
     
     # Create config object
@@ -82,6 +95,11 @@ def parse_args():
     config.min_lr = args.min_lr
     config.max_lr = args.max_lr
     config.weight_decay = args.weight_decay
+    
+    # Wandb configuration
+    config.use_wandb = args.use_wandb
+    config.wandb_project = args.wandb_project
+    config.wandb_run_name = args.wandb_run_name
     
     # Set dataset-specific defaults
     dataset_configs = {
@@ -133,4 +151,9 @@ def print_config(config):
     print(f"ChillAdam Min LR: {config.min_lr}")
     print(f"ChillAdam Max LR: {config.max_lr}")
     print(f"Weight Decay: {config.weight_decay}")
+    print(f"Use Wandb: {config.use_wandb}")
+    if config.use_wandb:
+        print(f"Wandb Project: {config.wandb_project}")
+        if config.wandb_run_name:
+            print(f"Wandb Run Name: {config.wandb_run_name}")
     print("=" * 50)
