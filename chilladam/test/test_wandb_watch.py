@@ -11,7 +11,7 @@ import os
 import unittest.mock as mock
 
 # Add chilladam to path
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
 def test_wandb_watch_functionality():
     """Test wandb.watch() integration"""

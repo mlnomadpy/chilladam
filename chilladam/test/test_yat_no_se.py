@@ -11,7 +11,7 @@ import torch
 import torch.nn as nn
 
 # Add chilladam to path
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
 def test_yat_no_se_models():
     """Test YAT model functionality without SE layers"""
@@ -79,7 +79,7 @@ def test_yat_no_se_models():
     
     # Test 5: Model creation through main.py
     print("\n5. Testing model creation through main.py...")
-    sys.path.insert(0, './chilladam')
+    sys.path.insert(0, '../../../../')
     from main import create_model
     
     main_models_to_test = [
