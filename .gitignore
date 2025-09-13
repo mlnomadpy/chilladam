@@ -60,6 +60,9 @@ htmlcov/
 *.log
 logs/
 
+# Wandb
+wandb/
+
 # Temporary files
 tmp/
 temp/
