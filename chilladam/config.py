@@ -23,7 +23,7 @@ class Config:
         self.model_name = "resnet18"  # Default to ResNet-18
         
         # ChillAdam optimizer parameters
-        self.min_lr = 1e-5
+        self.min_lr = 1e-4
         self.max_lr = 1.0
         self.eps = 1e-8
         self.betas = (0.9, 0.999)
