@@ -51,6 +51,9 @@ Train with different optimizers:
 # Adam optimizer
 python main.py --optimizer adam --lr 0.001
 
+# ChillSGD optimizer (SGD with gradient normalization and adaptive learning rate)
+python main.py --optimizer chillsgd --min-lr 1e-5 --max-lr 0.1
+
 # SGD with momentum
 python main.py --optimizer sgd --lr 0.01 --momentum 0.9
 
@@ -160,7 +163,7 @@ python main.py --model yat_resnet18 \
 - `--image-size`: Input image size (auto-detected based on dataset if not specified)
 
 #### Optimizer Arguments
-- `--optimizer`: Choose optimizer: `chilladam`, `adam`, `adamw`, `sgd`, `rmsprop`, `adamax`, `nadam`, `radam` (default: chilladam)
+- `--optimizer`: Choose optimizer: `chilladam`, `chillsgd`, `adam`, `adamw`, `sgd`, `rmsprop`, `adamax`, `nadam`, `radam` (default: chilladam)
 
 #### Standard Optimizer Parameters (Adam, AdamW, SGD, RMSprop, etc.)
 - `--lr`: Learning rate for standard optimizers (default: 1e-3)
@@ -169,9 +172,9 @@ python main.py --model yat_resnet18 \
 - `--weight-decay`: Weight decay for regularization (default: 0)
 - `--shuffle-buffer-size`: Buffer size for shuffling streaming datasets (default: 10000)
 
-#### ChillAdam Specific Parameters (only used when `--optimizer chilladam`)
-- `--min-lr`: Minimum learning rate for ChillAdam (default: 1e-5)
-- `--max-lr`: Maximum learning rate for ChillAdam (default: 1.0)
+#### ChillAdam & ChillSGD Specific Parameters (used when `--optimizer chilladam` or `--optimizer chillsgd`)
+- `--min-lr`: Minimum learning rate for ChillAdam and ChillSGD (default: 1e-5)
+- `--max-lr`: Maximum learning rate for ChillAdam and ChillSGD (default: 1.0)
 
 #### Weights & Biases Arguments
 - `--use-wandb`: Enable Weights & Biases logging (default: disabled)
@@ -185,6 +188,7 @@ python main.py --model yat_resnet18 \
 | Optimizer | Description | Key Parameters |
 |-----------|-------------|----------------|
 | **ChillAdam** | Custom adaptive optimizer with parameter norm-based learning rates | `min_lr`, `max_lr`, `eps`, `betas`, `weight_decay` |
+| **ChillSGD** | Custom SGD with gradient normalization and adaptive learning rates (no momentum) | `min_lr`, `max_lr`, `eps`, `weight_decay` |
 | **Adam** | Adaptive moment estimation | `lr`, `betas`, `eps`, `weight_decay` |
 | **AdamW** | Adam with decoupled weight decay | `lr`, `betas`, `eps`, `weight_decay` |
 | **SGD** | Stochastic Gradient Descent | `lr`, `momentum`, `weight_decay` |
@@ -226,6 +230,14 @@ The ChillAdam optimizer adapts learning rates based on parameter norms, providin
 - Gradient normalization
 - Momentum-based updates
 - Configurable learning rate bounds
+
+### ChillSGD Optimizer
+
+The ChillSGD optimizer combines SGD with the "chill" mechanism from ChillAdam:
+- **Gradient normalization**: Divides gradients by their L2 norm for stable training
+- **Adaptive learning rate**: Uses inverse of parameter norm instead of fixed learning rate
+- **No momentum**: Pure SGD without momentum for simplicity
+- **Configurable bounds**: Min/max learning rate constraints for stability
 
 ### PyTorch Built-in Optimizers
 
