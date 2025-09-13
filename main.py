@@ -81,10 +81,31 @@ def main():
         
         # Create trainer
         print(f"Initializing trainer with device: {config.device}")
+        
+        # Prepare wandb config if using wandb
+        wandb_config = None
+        if config.use_wandb:
+            wandb_config = {
+                'project': config.wandb_project,
+                'run_name': config.wandb_run_name,
+                'model': config.model_name,
+                'dataset': config.dataset,
+                'epochs': config.num_epochs,
+                'batch_size': config.batch_size,
+                'min_lr': config.min_lr,
+                'max_lr': config.max_lr,
+                'weight_decay': config.weight_decay,
+                'image_size': config.image_size,
+                'num_classes': config.num_classes,
+                'device': config.device
+            }
+        
         trainer = Trainer(
             model=model,
             optimizer=optimizer,
-            device=config.device
+            device=config.device,
+            use_wandb=config.use_wandb,
+            wandb_config=wandb_config
         )
         
         # Start training
