@@ -64,7 +64,8 @@ python main.py --model resnet18 \
                --min-lr 1e-5 \
                --max-lr 1.0 \
                --weight-decay 1e-4 \
-               --image-size 256
+               --image-size 256 \
+               --shuffle-buffer-size 20000
 ```
 
 ### Command Line Arguments
@@ -78,6 +79,7 @@ python main.py --model resnet18 \
 - `--max-lr`: Maximum learning rate for ChillAdam (default: 1.0)
 - `--weight-decay`: Weight decay for regularization (default: 0)
 - `--image-size`: Input image size (auto-detected based on dataset if not specified)
+- `--shuffle-buffer-size`: Buffer size for shuffling streaming datasets (default: 10000)
 
 ## Supported Datasets
 
