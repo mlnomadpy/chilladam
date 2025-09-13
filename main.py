@@ -3,10 +3,12 @@ ChillAdam Training Script
 
 A modular training script for ResNet architectures with ChillAdam optimizer.
 Supports ResNet-18 and ResNet-50 implemented from scratch.
+Supports multiple datasets from Hugging Face: Tiny ImageNet, ImageNet-1k, Food-101, STL-10.
 
 Usage:
-    python main.py --model resnet18 --epochs 10 --batch-size 64
-    python main.py --model resnet50 --epochs 20 --batch-size 32
+    python main.py --model resnet18 --dataset tiny-imagenet --epochs 10 --batch-size 64
+    python main.py --model resnet50 --dataset imagenet-1k --epochs 20 --batch-size 32
+    python main.py --model resnet18 --dataset food101 --epochs 15 --batch-size 128
 """
 
 import sys
@@ -16,7 +18,7 @@ import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'chilladam'))
 
 from chilladam import ChillAdam, resnet18, resnet50
-from chilladam.data import get_tiny_imagenet_loaders
+from chilladam.data import get_data_loaders
 from chilladam.training import Trainer
 from chilladam.config import parse_args, print_config
 
@@ -51,8 +53,9 @@ def main():
         print_config(config)
         
         # Create data loaders
-        print("\nPreparing data loaders...")
-        train_dataloader, val_dataloader = get_tiny_imagenet_loaders(
+        print(f"\nPreparing {config.dataset} data loaders...")
+        train_dataloader, val_dataloader = get_data_loaders(
+            dataset_name=config.dataset,
             batch_size=config.batch_size,
             image_size=config.image_size
         )
