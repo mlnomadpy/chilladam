@@ -174,7 +174,7 @@ class Trainer:
                 correct_top1 += (top1_pred == labels).sum().item()
                 total_predictions += labels.size(0)
         
-        avg_loss = total_loss / len(val_dataloader.dataset)
+        avg_loss = total_loss / total_predictions
         top1_accuracy = 100.0 * correct_top1 / total_predictions
         top5_accuracy = 100.0 * correct_top5 / total_predictions
         

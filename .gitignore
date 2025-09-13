@@ -68,3 +68,9 @@ tmp/
 temp/
 test_structure.py
 demo.py
+
+# Test files for the IterableDataset fix (can be removed after verification)
+test_iterable_dataset.py
+test_streaming_dataset_fix.py
+test_simple_fix_validation.py
+demo_streaming_fix.py
