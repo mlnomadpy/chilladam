@@ -11,7 +11,7 @@ import sys
 import os
 
 # Add chilladam to path
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
 def test_chillsgd_basic():
     """Test basic ChillSGD functionality"""
