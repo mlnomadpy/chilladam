@@ -1,9 +1,10 @@
 # ChillAdam
 
-A modular deep learning library featuring a custom ChillAdam optimizer and ResNet implementations from scratch with efficient dataset streaming.
+A modular deep learning library featuring a custom ChillAdam optimizer and ResNet implementations from scratch with efficient dataset streaming and support for multiple PyTorch optimizers.
 
 ## Features
 
+- **Multiple Optimizer Support**: ChillAdam custom optimizer plus 7 PyTorch built-in optimizers (Adam, AdamW, SGD, RMSprop, Adamax, NAdam, RAdam)
 - **ChillAdam Optimizer**: Custom optimizer with adaptive learning rates based on parameter norms
 - **ResNet from Scratch**: Full implementations of ResNet-18 and ResNet-50 architectures
 - **Modular Design**: Clean, production-ready code structure
@@ -27,31 +28,43 @@ pip install -r requirements.txt
 
 ### Basic Training
 
-Train with ResNet-18 on Tiny ImageNet (default):
+Train with ResNet-18 and ChillAdam optimizer (default):
 ```bash
 python main.py
 ```
 
+Train with different optimizers:
+```bash
+# Adam optimizer
+python main.py --optimizer adam --lr 0.001
+
+# SGD with momentum
+python main.py --optimizer sgd --lr 0.01 --momentum 0.9
+
+# AdamW with weight decay
+python main.py --optimizer adamw --lr 0.002 --weight-decay 0.01
+```
+
 Train with ResNet-50 on ImageNet-1k:
 ```bash
-python main.py --model resnet50 --dataset imagenet-1k
+python main.py --model resnet50 --dataset imagenet-1k --optimizer adam --lr 0.001
 ```
 
 ### Dataset Options
 
-Train on different datasets:
+Train on different datasets with various optimizers:
 ```bash
-# Tiny ImageNet (200 classes, 64x64 images)
-python main.py --dataset tiny-imagenet
+# Tiny ImageNet (200 classes, 64x64 images) with ChillAdam
+python main.py --dataset tiny-imagenet --optimizer chilladam
 
-# ImageNet-1k (1000 classes, 224x224 images)
-python main.py --dataset imagenet-1k --model resnet50
+# ImageNet-1k (1000 classes, 224x224 images) with Adam
+python main.py --dataset imagenet-1k --model resnet50 --optimizer adam --lr 0.001
 
-# Food-101 (101 classes, 224x224 images)
-python main.py --dataset food101 --batch-size 32
+# Food-101 (101 classes, 224x224 images) with SGD
+python main.py --dataset food101 --batch-size 32 --optimizer sgd --lr 0.01 --momentum 0.9
 
-# STL-10 (10 classes, 96x96 images)
-python main.py --dataset stl10 --epochs 50
+# STL-10 (10 classes, 96x96 images) with AdamW
+python main.py --dataset stl10 --epochs 50 --optimizer adamw --lr 0.002 --weight-decay 0.01
 ```
 
 ### Advanced Options
@@ -59,25 +72,49 @@ python main.py --dataset stl10 --epochs 50
 ```bash
 python main.py --model resnet18 \
                --dataset food101 \
+               --optimizer adamw \
+               --lr 0.002 \
+               --weight-decay 0.01 \
                --epochs 20 \
                --batch-size 64 \
-               --min-lr 1e-5 \
-               --max-lr 1.0 \
-               --weight-decay 1e-4 \
                --image-size 256
 ```
 
 ### Command Line Arguments
 
+#### Model and Training Arguments
 - `--model`: Choose between `resnet18` or `resnet50` (default: resnet18)
 - `--dataset`: Choose dataset: `tiny-imagenet`, `imagenet-1k`, `food101`, `stl10` (default: tiny-imagenet)
 - `--epochs`: Number of training epochs (default: 10)
 - `--batch-size`: Batch size for training (default: 64)
 - `--device`: Training device, `cuda` or `cpu` (auto-detected)
+- `--image-size`: Input image size (auto-detected based on dataset if not specified)
+
+#### Optimizer Arguments
+- `--optimizer`: Choose optimizer: `chilladam`, `adam`, `adamw`, `sgd`, `rmsprop`, `adamax`, `nadam`, `radam` (default: chilladam)
+
+#### Standard Optimizer Parameters (Adam, AdamW, SGD, RMSprop, etc.)
+- `--lr`: Learning rate for standard optimizers (default: 1e-3)
+- `--momentum`: Momentum for SGD and RMSprop (default: 0.9)
+- `--alpha`: Alpha parameter for RMSprop (default: 0.99)
+- `--weight-decay`: Weight decay for regularization (default: 0)
+
+#### ChillAdam Specific Parameters (only used when `--optimizer chilladam`)
 - `--min-lr`: Minimum learning rate for ChillAdam (default: 1e-5)
 - `--max-lr`: Maximum learning rate for ChillAdam (default: 1.0)
-- `--weight-decay`: Weight decay for regularization (default: 0)
-- `--image-size`: Input image size (auto-detected based on dataset if not specified)
+
+## Supported Optimizers
+
+| Optimizer | Description | Key Parameters |
+|-----------|-------------|----------------|
+| **ChillAdam** | Custom adaptive optimizer with parameter norm-based learning rates | `min_lr`, `max_lr`, `eps`, `betas`, `weight_decay` |
+| **Adam** | Adaptive moment estimation | `lr`, `betas`, `eps`, `weight_decay` |
+| **AdamW** | Adam with decoupled weight decay | `lr`, `betas`, `eps`, `weight_decay` |
+| **SGD** | Stochastic Gradient Descent | `lr`, `momentum`, `weight_decay` |
+| **RMSprop** | Root Mean Square Propagation | `lr`, `alpha`, `eps`, `weight_decay`, `momentum` |
+| **Adamax** | Adam with infinity norm | `lr`, `betas`, `eps`, `weight_decay` |
+| **NAdam** | Adam with Nesterov momentum | `lr`, `betas`, `eps`, `weight_decay` |
+| **RAdam** | Rectified Adam | `lr`, `betas`, `eps`, `weight_decay` |
 
 ## Supported Datasets
 
@@ -93,7 +130,7 @@ python main.py --model resnet18 \
 ```
 chilladam/
 ├── chilladam/
-│   ├── optimizers/          # ChillAdam optimizer implementation
+│   ├── optimizers/          # ChillAdam and PyTorch optimizer support
 │   ├── models/              # ResNet architectures from scratch
 │   ├── data/                # Data loading utilities with multi-dataset support
 │   ├── training/            # Training and validation logic
@@ -103,13 +140,23 @@ chilladam/
 └── README.md
 ```
 
-## ChillAdam Optimizer
+## Optimizers
+
+### ChillAdam Optimizer
 
 The ChillAdam optimizer adapts learning rates based on parameter norms, providing:
 - Automatic learning rate scaling
 - Gradient normalization
 - Momentum-based updates
 - Configurable learning rate bounds
+
+### PyTorch Built-in Optimizers
+
+All standard PyTorch optimizers are supported with their native parameters:
+- **Adam/AdamW**: Adaptive moment estimation with optional weight decay
+- **SGD**: Stochastic Gradient Descent with optional momentum
+- **RMSprop**: Root Mean Square Propagation
+- **Adamax, NAdam, RAdam**: Advanced Adam variants
 
 ## ResNet Implementation
 
