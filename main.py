@@ -57,7 +57,8 @@ def main():
         train_dataloader, val_dataloader = get_data_loaders(
             dataset_name=config.dataset,
             batch_size=config.batch_size,
-            image_size=config.image_size
+            image_size=config.image_size,
+            shuffle_buffer_size=config.shuffle_buffer_size
         )
         
         # Create model

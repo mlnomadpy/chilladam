@@ -86,7 +86,7 @@ def load_dataset_with_fallbacks(dataset_name):
     raise Exception(f"Failed to stream dataset '{dataset_name}' from any source. Last error: {last_error}")
 
 
-def get_data_loaders(dataset_name="tiny-imagenet", batch_size=64, image_size=None):
+def get_data_loaders(dataset_name="tiny-imagenet", batch_size=64, image_size=None, shuffle_buffer_size=10000):
     """
     Get DataLoaders for specified dataset.
     
@@ -94,6 +94,7 @@ def get_data_loaders(dataset_name="tiny-imagenet", batch_size=64, image_size=Non
         dataset_name: Name of dataset to load
         batch_size: batch size for training and validation
         image_size: size to resize images to (uses dataset default if None)
+        shuffle_buffer_size: buffer size for shuffling streaming datasets (larger values better mix classes)
         
     Returns:
         tuple: (train_dataloader, val_dataloader)
@@ -117,8 +118,8 @@ def get_data_loaders(dataset_name="tiny-imagenet", batch_size=64, image_size=Non
     train_dataset = dataset[splits["train"]]
     val_dataset = dataset[splits["val"]]
     
-    # For streaming datasets, shuffle the train dataset itself
-    train_dataset = train_dataset.shuffle(buffer_size=1000)
+    # For streaming datasets, shuffle the train dataset itself with configurable buffer size
+    train_dataset = train_dataset.shuffle(buffer_size=shuffle_buffer_size)
     
     # Get normalization parameters
     mean = dataset_config["mean"]
@@ -164,7 +165,7 @@ def get_data_loaders(dataset_name="tiny-imagenet", batch_size=64, image_size=Non
 
 
 # Keep backward compatibility
-def get_tiny_imagenet_loaders(batch_size=64, image_size=64):
+def get_tiny_imagenet_loaders(batch_size=64, image_size=64, shuffle_buffer_size=10000):
     """
     Get DataLoaders for Tiny ImageNet dataset.
     This function is kept for backward compatibility.
@@ -172,8 +173,9 @@ def get_tiny_imagenet_loaders(batch_size=64, image_size=64):
     Arguments:
         batch_size: batch size for training and validation
         image_size: size to resize images to
+        shuffle_buffer_size: buffer size for shuffling streaming datasets
         
     Returns:
         tuple: (train_dataloader, val_dataloader)
     """
-    return get_data_loaders("tiny-imagenet", batch_size, image_size)
+    return get_data_loaders("tiny-imagenet", batch_size, image_size, shuffle_buffer_size)
