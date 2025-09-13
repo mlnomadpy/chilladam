@@ -5,6 +5,7 @@ Optimizer factory for creating different optimizers based on configuration.
 import torch
 import torch.optim as optim
 from .chilladam import ChillAdam
+from .chillsgd import ChillSGD
 
 
 def create_optimizer(optimizer_name, model_parameters, **kwargs):
@@ -28,6 +29,15 @@ def create_optimizer(optimizer_name, model_parameters, **kwargs):
             max_lr=kwargs.get('max_lr', 1.0),
             eps=kwargs.get('eps', 1e-8),
             betas=kwargs.get('betas', (0.9, 0.999)),
+            weight_decay=kwargs.get('weight_decay', 0)
+        )
+    
+    elif optimizer_name == "chillsgd":
+        return ChillSGD(
+            model_parameters,
+            min_lr=kwargs.get('min_lr', 1e-5),
+            max_lr=kwargs.get('max_lr', 1.0),
+            eps=kwargs.get('eps', 1e-8),
             weight_decay=kwargs.get('weight_decay', 0)
         )
     
@@ -96,7 +106,7 @@ def create_optimizer(optimizer_name, model_parameters, **kwargs):
     
     else:
         raise ValueError(f"Unsupported optimizer: {optimizer_name}. "
-                        f"Supported optimizers: chilladam, adam, adamw, sgd, rmsprop, adamax, nadam, radam")
+                        f"Supported optimizers: chilladam, chillsgd, adam, adamw, sgd, rmsprop, adamax, nadam, radam")
 
 
 def get_optimizer_info():
@@ -108,6 +118,7 @@ def get_optimizer_info():
     """
     return {
         "chilladam": "Custom ChillAdam optimizer with adaptive learning rates",
+        "chillsgd": "Custom ChillSGD optimizer with gradient normalization and adaptive learning rates (SGD without momentum)",
         "adam": "Adam optimizer",
         "adamw": "AdamW optimizer with decoupled weight decay",
         "sgd": "Stochastic Gradient Descent",
