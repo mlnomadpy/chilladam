@@ -28,9 +28,9 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'chilladam'))
 
 from chilladam import (
     ChillAdam, resnet18, resnet50,
-    standard_se_resnet18, standard_se_resnet34,
-    yat_resnet18, yat_resnet34,
-    yat_resnet18_no_se, yat_resnet34_no_se
+    standard_se_resnet18, standard_se_resnet34, standard_se_resnet50,
+    yat_resnet18, yat_resnet34, yat_resnet50,
+    yat_resnet18_no_se, yat_resnet34_no_se, yat_resnet50_no_se
 )
 from chilladam.optimizers import create_optimizer
 from chilladam.data import get_data_loaders
@@ -62,22 +62,32 @@ def create_model(model_name, num_classes, input_size):
     elif model_name == "standard_se_resnet34":
         print("Creating Standard SE-ResNet-34 model from scratch...")
         return standard_se_resnet34(num_classes=num_classes)
+    elif model_name == "standard_se_resnet50":
+        print("Creating Standard SE-ResNet-50 model from scratch...")
+        return standard_se_resnet50(num_classes=num_classes)
     elif model_name == "yat_resnet18":
         print("Creating YAT-ResNet-18 model from scratch...")
         return yat_resnet18(num_classes=num_classes)
     elif model_name == "yat_resnet34":
         print("Creating YAT-ResNet-34 model from scratch...")
         return yat_resnet34(num_classes=num_classes)
+    elif model_name == "yat_resnet50":
+        print("Creating YAT-ResNet-50 model from scratch...")
+        return yat_resnet50(num_classes=num_classes)
     elif model_name == "yat_resnet18_no_se":
         print("Creating YAT-ResNet-18 model (no SE) from scratch...")
         return yat_resnet18_no_se(num_classes=num_classes)
     elif model_name == "yat_resnet34_no_se":
         print("Creating YAT-ResNet-34 model (no SE) from scratch...")
         return yat_resnet34_no_se(num_classes=num_classes)
+    elif model_name == "yat_resnet50_no_se":
+        print("Creating YAT-ResNet-50 model (no SE) from scratch...")
+        return yat_resnet50_no_se(num_classes=num_classes)
     else:
         supported_models = [
-            "resnet18", "resnet50", "standard_se_resnet18", "standard_se_resnet34",
-            "yat_resnet18", "yat_resnet34", "yat_resnet18_no_se", "yat_resnet34_no_se"
+            "resnet18", "resnet50", "standard_se_resnet18", "standard_se_resnet34", "standard_se_resnet50",
+            "yat_resnet18", "yat_resnet34", "yat_resnet50", 
+            "yat_resnet18_no_se", "yat_resnet34_no_se", "yat_resnet50_no_se"
         ]
         raise ValueError(f"Unknown model: {model_name}. Choose from: {supported_models}")
 
