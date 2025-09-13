@@ -55,11 +55,13 @@ def parse_args():
     Returns:
         Config: configuration object with parsed arguments
     """
-    parser = argparse.ArgumentParser(description="Train ResNet with configurable optimizer")
+    parser = argparse.ArgumentParser(description="Train neural networks with configurable optimizer")
     
     # Model arguments
-    parser.add_argument("--model", type=str, choices=["resnet18", "resnet50"], 
-                       default="resnet18", help="ResNet architecture to use")
+    parser.add_argument("--model", type=str, 
+                       choices=["resnet18", "resnet50", "standard_se_resnet18", "standard_se_resnet34", 
+                               "yat_resnet18", "yat_resnet34"], 
+                       default="resnet18", help="Model architecture to use")
     
     # Dataset arguments
     parser.add_argument("--dataset", type=str, 

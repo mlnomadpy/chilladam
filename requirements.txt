@@ -4,3 +4,4 @@ datasets>=2.0.0
 tqdm>=4.62.0
 pillow>=8.3.0
 wandb>=0.15.0
+nmn
