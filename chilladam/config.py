@@ -79,7 +79,7 @@ def parse_args():
     
     # Optimizer arguments
     parser.add_argument("--optimizer", type=str, 
-                       choices=["chilladam", "adam", "adamw", "sgd", "rmsprop", "adamax", "nadam", "radam"],
+                       choices=["chilladam", "chillsgd", "adam", "adamw", "sgd", "rmsprop", "adamax", "nadam", "radam"],
                        default="chilladam", 
                        help="Optimizer to use for training")
     parser.add_argument("--lr", type=float, default=1e-3,
@@ -89,11 +89,11 @@ def parse_args():
     parser.add_argument("--alpha", type=float, default=0.99,
                        help="Alpha parameter for RMSprop optimizer")
     
-    # ChillAdam specific arguments
+    # ChillAdam and ChillSGD specific arguments
     parser.add_argument("--min-lr", type=float, default=1e-5,
-                       help="Minimum learning rate for ChillAdam")
+                       help="Minimum learning rate for ChillAdam and ChillSGD")
     parser.add_argument("--max-lr", type=float, default=1.0,
-                       help="Maximum learning rate for ChillAdam")
+                       help="Maximum learning rate for ChillAdam and ChillSGD")
     parser.add_argument("--weight-decay", type=float, default=0,
                        help="Weight decay for optimizers")
     
@@ -193,9 +193,9 @@ def print_config(config):
     print(f"Optimizer: {config.optimizer.upper()}")
     print(f"Shuffle Buffer Size: {config.shuffle_buffer_size}")
 
-    if config.optimizer == "chilladam":
-        print(f"ChillAdam Min LR: {config.min_lr}")
-        print(f"ChillAdam Max LR: {config.max_lr}")
+    if config.optimizer in ["chilladam", "chillsgd"]:
+        print(f"{config.optimizer.upper()} Min LR: {config.min_lr}")
+        print(f"{config.optimizer.upper()} Max LR: {config.max_lr}")
     else:
         print(f"Learning Rate: {config.lr}")
         if config.optimizer == "sgd":
