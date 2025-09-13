@@ -4,16 +4,18 @@ Model architectures for ChillAdam library.
 
 from .resnet import ResNet, resnet18, resnet50
 from .se_models import (
-    SELayer, YatSELayer, BasicStandardBlock, BasicYATBlock,
+    SELayer, YatSELayer, BasicStandardBlock, BasicYATBlock, BasicYATBlockNoSE,
     StandardConvNet, YATConvNet,
     standard_se_resnet18, standard_se_resnet34,
-    yat_resnet18, yat_resnet34
+    yat_resnet18, yat_resnet34,
+    yat_resnet18_no_se, yat_resnet34_no_se
 )
 
 __all__ = [
     "ResNet", "resnet18", "resnet50",
-    "SELayer", "YatSELayer", "BasicStandardBlock", "BasicYATBlock",
+    "SELayer", "YatSELayer", "BasicStandardBlock", "BasicYATBlock", "BasicYATBlockNoSE",
     "StandardConvNet", "YATConvNet",
     "standard_se_resnet18", "standard_se_resnet34",
-    "yat_resnet18", "yat_resnet34"
+    "yat_resnet18", "yat_resnet34",
+    "yat_resnet18_no_se", "yat_resnet34_no_se"
 ]
