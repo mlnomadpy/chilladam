@@ -26,7 +26,11 @@ import os
 # Add the chilladam package to the path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'chilladam'))
 
-from chilladam import ChillAdam, resnet18, resnet50
+from chilladam import (
+    ChillAdam, resnet18, resnet50,
+    standard_se_resnet18, standard_se_resnet34,
+    yat_resnet18, yat_resnet34
+)
 from chilladam.optimizers import create_optimizer
 from chilladam.data import get_data_loaders
 from chilladam.training import Trainer
@@ -35,10 +39,10 @@ from chilladam.config import parse_args, print_config
 
 def create_model(model_name, num_classes, input_size):
     """
-    Create the specified ResNet model.
+    Create the specified model.
     
     Arguments:
-        model_name: 'resnet18' or 'resnet50'
+        model_name: model architecture name
         num_classes: number of output classes
         input_size: input image size
         
@@ -51,8 +55,24 @@ def create_model(model_name, num_classes, input_size):
     elif model_name == "resnet50":
         print("Creating ResNet-50 model from scratch...")
         return resnet50(num_classes=num_classes, input_size=input_size)
+    elif model_name == "standard_se_resnet18":
+        print("Creating Standard SE-ResNet-18 model from scratch...")
+        return standard_se_resnet18(num_classes=num_classes)
+    elif model_name == "standard_se_resnet34":
+        print("Creating Standard SE-ResNet-34 model from scratch...")
+        return standard_se_resnet34(num_classes=num_classes)
+    elif model_name == "yat_resnet18":
+        print("Creating YAT-ResNet-18 model from scratch...")
+        return yat_resnet18(num_classes=num_classes)
+    elif model_name == "yat_resnet34":
+        print("Creating YAT-ResNet-34 model from scratch...")
+        return yat_resnet34(num_classes=num_classes)
     else:
-        raise ValueError(f"Unknown model: {model_name}. Choose 'resnet18' or 'resnet50'")
+        supported_models = [
+            "resnet18", "resnet50", "standard_se_resnet18", "standard_se_resnet34",
+            "yat_resnet18", "yat_resnet34"
+        ]
+        raise ValueError(f"Unknown model: {model_name}. Choose from: {supported_models}")
 
 
 def main():
