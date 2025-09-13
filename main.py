@@ -1,14 +1,23 @@
 """
 ChillAdam Training Script
 
-A modular training script for ResNet architectures with ChillAdam optimizer.
+A modular training script for ResNet architectures with configurable optimizers.
 Supports ResNet-18 and ResNet-50 implemented from scratch.
 Supports streaming of multiple datasets from Hugging Face: Tiny ImageNet, ImageNet-1k, Food-101, STL-10.
+Supports multiple optimizers: ChillAdam, Adam, AdamW, SGD, RMSprop, Adamax, NAdam, RAdam.
 
 Usage:
+    # Default ChillAdam optimizer
     python main.py --model resnet18 --dataset tiny-imagenet --epochs 10 --batch-size 64
-    python main.py --model resnet50 --dataset imagenet-1k --epochs 20 --batch-size 32
-    python main.py --model resnet18 --dataset food101 --epochs 15 --batch-size 128
+    
+    # Adam optimizer
+    python main.py --optimizer adam --lr 0.001 --model resnet50 --dataset imagenet-1k --epochs 20
+    
+    # SGD with momentum
+    python main.py --optimizer sgd --lr 0.01 --momentum 0.9 --model resnet18 --dataset food101 --epochs 15
+    
+    # AdamW with weight decay
+    python main.py --optimizer adamw --lr 0.002 --weight-decay 0.01 --model resnet50 --dataset stl10 --epochs 25
 """
 
 import sys
@@ -18,6 +27,7 @@ import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'chilladam'))
 
 from chilladam import ChillAdam, resnet18, resnet50
+from chilladam.optimizers import create_optimizer
 from chilladam.data import get_data_loaders
 from chilladam.training import Trainer
 from chilladam.config import parse_args, print_config
@@ -70,14 +80,18 @@ def main():
         )
         
         # Create optimizer
-        print("Setting up ChillAdam optimizer...")
-        optimizer = ChillAdam(
-            model.parameters(),
+        print(f"Setting up {config.optimizer.upper()} optimizer...")
+        optimizer = create_optimizer(
+            optimizer_name=config.optimizer,
+            model_parameters=model.parameters(),
+            lr=config.lr,
             min_lr=config.min_lr,
             max_lr=config.max_lr,
             eps=config.eps,
             betas=config.betas,
-            weight_decay=config.weight_decay
+            weight_decay=config.weight_decay,
+            momentum=config.momentum,
+            alpha=config.alpha
         )
         
         # Create trainer
@@ -91,10 +105,14 @@ def main():
                 'run_name': config.wandb_run_name,
                 'model': config.model_name,
                 'dataset': config.dataset,
+                'optimizer': config.optimizer,
                 'epochs': config.num_epochs,
                 'batch_size': config.batch_size,
-                'min_lr': config.min_lr,
-                'max_lr': config.max_lr,
+                'learning_rate': config.lr if config.optimizer != 'chilladam' else config.max_lr,
+                'min_lr': config.min_lr if config.optimizer == 'chilladam' else None,
+                'max_lr': config.max_lr if config.optimizer == 'chilladam' else None,
+                'momentum': config.momentum if config.optimizer in ['sgd', 'rmsprop'] else None,
+                'alpha': config.alpha if config.optimizer == 'rmsprop' else None,
                 'weight_decay': config.weight_decay,
                 'image_size': config.image_size,
                 'num_classes': config.num_classes,

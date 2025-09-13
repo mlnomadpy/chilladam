@@ -22,8 +22,16 @@ class Config:
         # Model configuration
         self.model_name = "resnet18"  # Default to ResNet-18
         
-        # ChillAdam optimizer parameters
-        self.min_lr = 1e-4
+        # Optimizer configuration
+        self.optimizer = "chilladam"  # Default optimizer
+        
+        # Standard optimizer parameters
+        self.lr = 1e-3  # Standard learning rate for most optimizers
+        self.momentum = 0.9  # For SGD and RMSprop
+        self.alpha = 0.99  # For RMSprop
+        
+        # ChillAdam specific parameters (only used when optimizer is chilladam)
+        self.min_lr = 1e-5
         self.max_lr = 1.0
         self.eps = 1e-8
         self.betas = (0.9, 0.999)
@@ -47,7 +55,7 @@ def parse_args():
     Returns:
         Config: configuration object with parsed arguments
     """
-    parser = argparse.ArgumentParser(description="Train ResNet with ChillAdam optimizer")
+    parser = argparse.ArgumentParser(description="Train ResNet with configurable optimizer")
     
     # Model arguments
     parser.add_argument("--model", type=str, choices=["resnet18", "resnet50"], 
@@ -68,12 +76,24 @@ def parse_args():
                        default=None, help="Device to use for training")
     
     # Optimizer arguments
+    parser.add_argument("--optimizer", type=str, 
+                       choices=["chilladam", "adam", "adamw", "sgd", "rmsprop", "adamax", "nadam", "radam"],
+                       default="chilladam", 
+                       help="Optimizer to use for training")
+    parser.add_argument("--lr", type=float, default=1e-3,
+                       help="Learning rate for standard optimizers (not used for ChillAdam)")
+    parser.add_argument("--momentum", type=float, default=0.9,
+                       help="Momentum for SGD and RMSprop optimizers")
+    parser.add_argument("--alpha", type=float, default=0.99,
+                       help="Alpha parameter for RMSprop optimizer")
+    
+    # ChillAdam specific arguments
     parser.add_argument("--min-lr", type=float, default=1e-5,
                        help="Minimum learning rate for ChillAdam")
     parser.add_argument("--max-lr", type=float, default=1.0,
                        help="Maximum learning rate for ChillAdam")
     parser.add_argument("--weight-decay", type=float, default=0,
-                       help="Weight decay for ChillAdam")
+                       help="Weight decay for optimizers")
     
     # Dataset arguments
     parser.add_argument("--image-size", type=int, default=None,
@@ -103,6 +123,10 @@ def parse_args():
     config.dataset = args.dataset
     config.num_epochs = args.epochs
     config.batch_size = args.batch_size
+    config.optimizer = args.optimizer
+    config.lr = args.lr
+    config.momentum = args.momentum
+    config.alpha = args.alpha
     config.min_lr = args.min_lr
     config.max_lr = args.max_lr
     config.weight_decay = args.weight_decay
@@ -164,9 +188,19 @@ def print_config(config):
     print(f"Batch Size: {config.batch_size}")
     print(f"Image Size: {config.image_size}")
     print(f"Number of Classes: {config.num_classes}")
+    print(f"Optimizer: {config.optimizer.upper()}")
     print(f"Shuffle Buffer Size: {config.shuffle_buffer_size}")
-    print(f"ChillAdam Min LR: {config.min_lr}")
-    print(f"ChillAdam Max LR: {config.max_lr}")
+
+    if config.optimizer == "chilladam":
+        print(f"ChillAdam Min LR: {config.min_lr}")
+        print(f"ChillAdam Max LR: {config.max_lr}")
+    else:
+        print(f"Learning Rate: {config.lr}")
+        if config.optimizer == "sgd":
+            print(f"Momentum: {config.momentum}")
+        elif config.optimizer == "rmsprop":
+            print(f"Momentum: {config.momentum}")
+            print(f"Alpha: {config.alpha}")
     print(f"Weight Decay: {config.weight_decay}")
     print(f"Use Wandb: {config.use_wandb}")
     if config.use_wandb:
