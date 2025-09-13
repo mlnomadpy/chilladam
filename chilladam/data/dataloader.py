@@ -53,13 +53,13 @@ DATASET_REGISTRY = {
 
 def load_dataset_with_fallbacks(dataset_name):
     """
-    Load dataset from Hugging Face with multiple fallback options.
+    Load dataset from Hugging Face with multiple fallback options using streaming.
     
     Arguments:
         dataset_name: Name of dataset in DATASET_REGISTRY
         
     Returns:
-        Loaded dataset object
+        Loaded dataset object (streaming)
         
     Raises:
         Exception if none of the dataset sources work
@@ -73,17 +73,17 @@ def load_dataset_with_fallbacks(dataset_name):
     last_error = None
     for hf_name in hf_names:
         try:
-            print(f"Trying to load dataset from '{hf_name}'...")
-            dataset = load_dataset(hf_name)
-            print(f"Successfully loaded dataset from '{hf_name}'")
+            print(f"Trying to stream dataset from '{hf_name}'...")
+            dataset = load_dataset(hf_name, streaming=True)
+            print(f"Successfully streaming dataset from '{hf_name}'")
             return dataset
         except Exception as e:
-            print(f"Failed to load from '{hf_name}': {e}")
+            print(f"Failed to stream from '{hf_name}': {e}")
             last_error = e
             continue
     
     # If we get here, all sources failed
-    raise Exception(f"Failed to load dataset '{dataset_name}' from any source. Last error: {last_error}")
+    raise Exception(f"Failed to stream dataset '{dataset_name}' from any source. Last error: {last_error}")
 
 
 def get_data_loaders(dataset_name="tiny-imagenet", batch_size=64, image_size=None):
@@ -98,7 +98,7 @@ def get_data_loaders(dataset_name="tiny-imagenet", batch_size=64, image_size=Non
     Returns:
         tuple: (train_dataloader, val_dataloader)
     """
-    print(f"Loading {dataset_name} dataset...")
+    print(f"Streaming {dataset_name} dataset...")
     
     if dataset_name not in DATASET_REGISTRY:
         raise ValueError(f"Unknown dataset: {dataset_name}. Choose from {list(DATASET_REGISTRY.keys())}")
@@ -116,6 +116,9 @@ def get_data_loaders(dataset_name="tiny-imagenet", batch_size=64, image_size=Non
     splits = dataset_config["splits"]
     train_dataset = dataset[splits["train"]]
     val_dataset = dataset[splits["val"]]
+    
+    # For streaming datasets, shuffle the train dataset itself
+    train_dataset = train_dataset.shuffle(buffer_size=1000)
     
     # Get normalization parameters
     mean = dataset_config["mean"]
@@ -146,8 +149,8 @@ def get_data_loaders(dataset_name="tiny-imagenet", batch_size=64, image_size=Non
         'label': examples['label']
     })
 
-    # Create data loaders
-    train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+    # Create data loaders - no shuffle for train since streaming datasets handle shuffling differently
+    train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=False)
     val_dataloader = DataLoader(val_dataset, batch_size=batch_size)
 
     return train_dataloader, val_dataloader

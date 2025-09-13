@@ -3,7 +3,7 @@ ChillAdam Training Script
 
 A modular training script for ResNet architectures with ChillAdam optimizer.
 Supports ResNet-18 and ResNet-50 implemented from scratch.
-Supports multiple datasets from Hugging Face: Tiny ImageNet, ImageNet-1k, Food-101, STL-10.
+Supports streaming of multiple datasets from Hugging Face: Tiny ImageNet, ImageNet-1k, Food-101, STL-10.
 
 Usage:
     python main.py --model resnet18 --dataset tiny-imagenet --epochs 10 --batch-size 64
