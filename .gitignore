@@ -26,8 +26,8 @@ MANIFEST
 *.pth
 *.pt
 
-# Datasets
-data/
+# Datasets (but not source code in chilladam/data/)
+/data/
 datasets/
 *.tar
 *.tar.gz
