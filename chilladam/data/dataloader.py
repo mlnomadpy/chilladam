@@ -140,14 +140,21 @@ def get_data_loaders(dataset_name="tiny-imagenet", batch_size=64, image_size=Non
     ])
 
     # Apply transformations to the datasets
-    train_dataset.set_transform(lambda examples: {
-        'pixel_values': [train_transforms(image.convert("RGB")) for image in examples['image']],
-        'label': examples['label']
-    })
-    val_dataset.set_transform(lambda examples: {
-        'pixel_values': [val_transforms(image.convert("RGB")) for image in examples['image']],
-        'label': examples['label']
-    })
+    # For streaming datasets (IterableDataset), we use map instead of set_transform
+    def transform_train_batch(examples):
+        return {
+            'pixel_values': [train_transforms(image.convert("RGB")) for image in examples['image']],
+            'label': examples['label']
+        }
+    
+    def transform_val_batch(examples):
+        return {
+            'pixel_values': [val_transforms(image.convert("RGB")) for image in examples['image']],
+            'label': examples['label']
+        }
+    
+    train_dataset = train_dataset.map(transform_train_batch, batched=True, remove_columns=['image'])
+    val_dataset = val_dataset.map(transform_val_batch, batched=True, remove_columns=['image'])
 
     # Create data loaders - no shuffle for train since streaming datasets handle shuffling differently
     train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=False)
