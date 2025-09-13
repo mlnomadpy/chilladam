@@ -33,6 +33,8 @@ class Config:
         self.use_wandb = False
         self.wandb_project = "chilladam-training"
         self.wandb_run_name = None
+        self.wandb_watch = False
+        self.wandb_watch_log_freq = 100
 
 
 def parse_args():
@@ -81,6 +83,10 @@ def parse_args():
                        help="Wandb project name")
     parser.add_argument("--wandb-run-name", type=str, default=None,
                        help="Wandb run name (auto-generated if not specified)")
+    parser.add_argument("--wandb-watch", action="store_true",
+                       help="Enable wandb.watch() to log model gradients and parameters")
+    parser.add_argument("--wandb-watch-log-freq", type=int, default=100,
+                       help="Log frequency for wandb.watch() (default: 100)")
     
     args = parser.parse_args()
     
@@ -100,6 +106,8 @@ def parse_args():
     config.use_wandb = args.use_wandb
     config.wandb_project = args.wandb_project
     config.wandb_run_name = args.wandb_run_name
+    config.wandb_watch = args.wandb_watch
+    config.wandb_watch_log_freq = args.wandb_watch_log_freq
     
     # Set dataset-specific defaults
     dataset_configs = {
@@ -156,4 +164,7 @@ def print_config(config):
         print(f"Wandb Project: {config.wandb_project}")
         if config.wandb_run_name:
             print(f"Wandb Run Name: {config.wandb_run_name}")
+        print(f"Wandb Watch: {config.wandb_watch}")
+        if config.wandb_watch:
+            print(f"Wandb Watch Log Freq: {config.wandb_watch_log_freq}")
     print("=" * 50)

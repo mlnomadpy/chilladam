@@ -24,14 +24,18 @@ class Trainer:
         criterion: loss function (default: CrossEntropyLoss)
         use_wandb: whether to use Weights & Biases logging
         wandb_config: configuration dict for wandb
+        wandb_watch: whether to enable wandb.watch() for model logging
+        wandb_watch_log_freq: log frequency for wandb.watch()
     """
     
-    def __init__(self, model, optimizer, device='cuda', criterion=None, use_wandb=False, wandb_config=None):
+    def __init__(self, model, optimizer, device='cuda', criterion=None, use_wandb=False, wandb_config=None, wandb_watch=False, wandb_watch_log_freq=100):
         self.model = model
         self.optimizer = optimizer
         self.device = device
         self.criterion = criterion or nn.CrossEntropyLoss()
         self.use_wandb = use_wandb and WANDB_AVAILABLE
+        self.wandb_watch = wandb_watch
+        self.wandb_watch_log_freq = wandb_watch_log_freq
         self.step_count = 0
         
         # Move model to device
@@ -42,6 +46,7 @@ class Trainer:
             if not WANDB_AVAILABLE:
                 print("Warning: wandb not available, disabling wandb logging")
                 self.use_wandb = False
+                self.wandb_watch = False
             else:
                 project = wandb_config.get('project', 'chilladam-training') if wandb_config else 'chilladam-training'
                 name = wandb_config.get('run_name') if wandb_config else None
@@ -51,6 +56,11 @@ class Trainer:
                     name=name,
                     config=wandb_config if wandb_config else {}
                 )
+                
+                # Set up wandb.watch() if requested
+                if self.wandb_watch:
+                    wandb.watch(self.model, log_freq=self.wandb_watch_log_freq)
+                    print(f"Wandb watch enabled with log frequency: {self.wandb_watch_log_freq}")
                 
                 # Log model info
                 total_params = sum(p.numel() for p in self.model.parameters())
