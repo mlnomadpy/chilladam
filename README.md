@@ -7,6 +7,8 @@ A modular deep learning library featuring a custom ChillAdam optimizer and ResNe
 - **Multiple Optimizer Support**: ChillAdam custom optimizer plus 7 PyTorch built-in optimizers (Adam, AdamW, SGD, RMSprop, Adamax, NAdam, RAdam)
 - **ChillAdam Optimizer**: Custom optimizer with adaptive learning rates based on parameter norms
 - **ResNet from Scratch**: Full implementations of ResNet-18 and ResNet-50 architectures
+- **SE-ResNet Models**: ResNet with Squeeze-and-Excitation blocks for improved feature representation
+- **YAT-ResNet Models**: Yet Another Transformation-based ResNet variants with SE or LayerNorm normalization
 - **Modular Design**: Clean, production-ready code structure
 - **Streaming Dataset Support**: Efficient streaming of multiple datasets from Hugging Face without local downloads
 - **Multiple Dataset Support**: Support for Tiny ImageNet, ImageNet-1k, Food-101, and STL-10 from Hugging Face
@@ -50,6 +52,23 @@ Train with ResNet-50 on ImageNet-1k:
 python main.py --model resnet50 --dataset imagenet-1k --optimizer adam --lr 0.001
 ```
 
+### Advanced Model Options
+
+Train with different ResNet architectures:
+```bash
+# SE-ResNet with Squeeze-and-Excitation blocks
+python main.py --model standard_se_resnet18 --dataset tiny-imagenet
+
+# YAT-ResNet with SE layers
+python main.py --model yat_resnet18 --dataset tiny-imagenet
+
+# YAT-ResNet without SE layers (with LayerNorm after skip connections)
+python main.py --model yat_resnet18_no_se --dataset tiny-imagenet
+
+# Larger YAT-ResNet variant
+python main.py --model yat_resnet34_no_se --dataset food101 --optimizer adam --lr 0.001
+```
+
 ### Dataset Options
 
 Train on different datasets with various optimizers:
@@ -87,7 +106,13 @@ python main.py --model resnet18 \
 ### Command Line Arguments
 
 #### Model and Training Arguments
-- `--model`: Choose between `resnet18` or `resnet50` (default: resnet18)
+- `--model`: Choose model architecture:
+  - **Basic ResNet**: `resnet18`, `resnet50`
+  - **SE-ResNet**: `standard_se_resnet18`, `standard_se_resnet34`
+  - **YAT-ResNet (with SE)**: `yat_resnet18`, `yat_resnet34`
+  - **YAT-ResNet (no SE, with LayerNorm)**: `yat_resnet18_no_se`, `yat_resnet34_no_se`
+  
+  Default: `resnet18`
 - `--dataset`: Choose dataset: `tiny-imagenet`, `imagenet-1k`, `food101`, `stl10` (default: tiny-imagenet)
 - `--epochs`: Number of training epochs (default: 10)
 - `--batch-size`: Batch size for training (default: 64)

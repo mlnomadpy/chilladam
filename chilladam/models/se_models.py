@@ -104,6 +104,44 @@ class BasicYATBlock(nn.Module):
         return out
 
 
+class BasicYATBlockNoSE(nn.Module):
+    """A basic residual block for the YATConvNet, without Squeeze-and-Excitation, with LayerNorm after skip connection."""
+    expansion = 1
+
+    def __init__(self, in_planes, planes, stride=1, use_alpha=True, use_dropconnect=False, drop_rate=0.1):
+        super(BasicYATBlockNoSE, self).__init__()
+        self.yat_conv = YatConv2d(in_planes, planes, kernel_size=3, stride=stride, padding=1,
+                                  use_alpha=use_alpha, use_dropconnect=use_dropconnect,
+                                  drop_rate=drop_rate, bias=False, epsilon=0.007)
+        self.lin_conv = nn.Conv2d(planes, planes, kernel_size=3, stride=1, padding=1, bias=False)
+        
+        # LayerNorm for post-skip connection normalization
+        # Normalize over channel dimension for 2D feature maps
+        self.layer_norm = nn.LayerNorm(self.expansion * planes)
+
+        self.shortcut = nn.Sequential()
+        if stride != 1 or in_planes != self.expansion * planes:
+            self.shortcut = nn.Sequential(
+                nn.Conv2d(in_planes, self.expansion * planes, kernel_size=1, stride=stride, bias=False),
+            )
+
+    def forward(self, x):
+        identity = self.shortcut(x)
+        out = self.yat_conv(x, deterministic=not self.training)
+        out = self.lin_conv(out)
+        out += identity
+        
+        # Apply LayerNorm after skip connection
+        # LayerNorm expects input of shape (N, ..., normalized_shape)
+        # For 2D feature maps (N, C, H, W), we need to permute to (N, H, W, C) for channel normalization
+        b, c, h, w = out.size()
+        out = out.permute(0, 2, 3, 1)  # (N, H, W, C)
+        out = self.layer_norm(out)     # Apply LayerNorm over channel dimension
+        out = out.permute(0, 3, 1, 2)  # Back to (N, C, H, W)
+        
+        return out
+
+
 class StandardConvNet(nn.Module):
     """A standard CNN with a ResNet-like architecture."""
     def __init__(self, block, num_blocks, num_classes=10):
@@ -226,6 +264,40 @@ def yat_resnet34(num_classes=200, use_alpha=True, use_dropconnect=False, drop_ra
         drop_rate: dropout rate for DropConnect
     """
     return YATConvNet(BasicYATBlock, [3, 4, 6, 3], 
+                      num_classes=num_classes,
+                      use_alpha=use_alpha,
+                      use_dropconnect=use_dropconnect,
+                      drop_rate=drop_rate)
+
+
+def yat_resnet18_no_se(num_classes=200, use_alpha=True, use_dropconnect=False, drop_rate=0.1):
+    """
+    YAT-based ResNet-18 without Squeeze-and-Excitation blocks, with LayerNorm after skip connection.
+    
+    Arguments:
+        num_classes: number of output classes
+        use_alpha: whether to use alpha scaling in YAT layers
+        use_dropconnect: whether to use DropConnect in YAT layers
+        drop_rate: dropout rate for DropConnect
+    """
+    return YATConvNet(BasicYATBlockNoSE, [2, 2, 2, 2], 
+                      num_classes=num_classes,
+                      use_alpha=use_alpha,
+                      use_dropconnect=use_dropconnect,
+                      drop_rate=drop_rate)
+
+
+def yat_resnet34_no_se(num_classes=200, use_alpha=True, use_dropconnect=False, drop_rate=0.1):
+    """
+    YAT-based ResNet-34 without Squeeze-and-Excitation blocks, with LayerNorm after skip connection.
+    
+    Arguments:
+        num_classes: number of output classes
+        use_alpha: whether to use alpha scaling in YAT layers
+        use_dropconnect: whether to use DropConnect in YAT layers
+        drop_rate: dropout rate for DropConnect
+    """
+    return YATConvNet(BasicYATBlockNoSE, [3, 4, 6, 3], 
                       num_classes=num_classes,
                       use_alpha=use_alpha,
                       use_dropconnect=use_dropconnect,

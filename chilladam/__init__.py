@@ -8,7 +8,8 @@ from .optimizers import ChillAdam
 from .models import (
     ResNet, resnet18, resnet50,
     standard_se_resnet18, standard_se_resnet34,
-    yat_resnet18, yat_resnet34
+    yat_resnet18, yat_resnet34,
+    yat_resnet18_no_se, yat_resnet34_no_se
 )
 
 __all__ = [
@@ -20,4 +21,6 @@ __all__ = [
     "standard_se_resnet34",
     "yat_resnet18",
     "yat_resnet34",
+    "yat_resnet18_no_se",
+    "yat_resnet34_no_se",
 ]
