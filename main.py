@@ -97,7 +97,9 @@ def main():
                 'weight_decay': config.weight_decay,
                 'image_size': config.image_size,
                 'num_classes': config.num_classes,
-                'device': config.device
+                'device': config.device,
+                'wandb_watch': config.wandb_watch,
+                'wandb_watch_log_freq': config.wandb_watch_log_freq
             }
         
         trainer = Trainer(
@@ -105,7 +107,9 @@ def main():
             optimizer=optimizer,
             device=config.device,
             use_wandb=config.use_wandb,
-            wandb_config=wandb_config
+            wandb_config=wandb_config,
+            wandb_watch=config.wandb_watch,
+            wandb_watch_log_freq=config.wandb_watch_log_freq
         )
         
         # Start training
