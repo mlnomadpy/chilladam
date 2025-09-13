@@ -8,8 +8,11 @@ A modular deep learning library featuring a custom ChillAdam optimizer and ResNe
 - **ChillAdam Optimizer**: Custom optimizer with adaptive learning rates based on parameter norms
 - **ResNet from Scratch**: Full implementations of ResNet-18 and ResNet-50 architectures
 - **SE-ResNet Models**: ResNet with Squeeze-and-Excitation blocks for improved feature representation
-- **YAT-ResNet Models**: Yet Another Transformation-based ResNet variants with SE or LayerNorm normalization
+- **YAT-ResNet Models**: Yet Another Transformation-based ResNet variants with configurable SE blocks or LayerNorm normalization
+- **Advanced YAT Features**: YAT models support alpha scaling, DropConnect regularization, and configurable dropout rates
+- **NMN Integration**: Utilizes the Neural Masked Networks (nmn) package for YAT transformations and advanced convolutions
 - **Modular Design**: Clean, production-ready code structure
+- **Weights & Biases Integration**: Full support for experiment tracking, model monitoring, and gradient/parameter logging
 - **Streaming Dataset Support**: Efficient streaming of multiple datasets from Hugging Face without local downloads
 - **Multiple Dataset Support**: Support for Tiny ImageNet, ImageNet-1k, Food-101, and STL-10 from Hugging Face
 
@@ -25,6 +28,14 @@ cd chilladam
 ```bash
 pip install -r requirements.txt
 ```
+
+### Key Dependencies
+- **PyTorch >= 1.9.0**: Deep learning framework
+- **torchvision >= 0.10.0**: Computer vision utilities
+- **datasets >= 2.0.0**: Hugging Face datasets for streaming
+- **wandb >= 0.15.0**: Weights & Biases for experiment tracking
+- **nmn**: Neural Masked Networks package for YAT transformations
+- **tqdm, pillow**: Progress bars and image processing
 
 ## Usage
 
@@ -103,6 +114,35 @@ python main.py --model resnet18 \
                --shuffle-buffer-size 20000
 ```
 
+### Weights & Biases Integration
+
+ChillAdam provides comprehensive Weights & Biases support for experiment tracking and model monitoring:
+
+```bash
+# Enable basic wandb logging
+python main.py --use-wandb --wandb-project my-chilladam-experiments
+
+# Enable wandb.watch() for gradient and parameter tracking
+python main.py --use-wandb --wandb-watch --wandb-watch-log-freq 50
+
+# Full wandb integration with custom run name
+python main.py --model yat_resnet18 \
+               --dataset food101 \
+               --optimizer chilladam \
+               --use-wandb \
+               --wandb-project food-classification \
+               --wandb-run-name yat-resnet18-chilladam \
+               --wandb-watch \
+               --wandb-watch-log-freq 100
+```
+
+#### Wandb Features:
+- **Experiment Tracking**: Automatically logs training/validation loss, accuracy, and hyperparameters
+- **Model Monitoring**: Track gradients, weights, and model topology with `wandb.watch()`
+- **Custom Projects**: Organize experiments with custom project names
+- **Run Names**: Set custom run names for easy identification
+- **Configurable Logging**: Adjust gradient/parameter logging frequency
+
 ### Command Line Arguments
 
 #### Model and Training Arguments
@@ -127,12 +167,18 @@ python main.py --model resnet18 \
 - `--momentum`: Momentum for SGD and RMSprop (default: 0.9)
 - `--alpha`: Alpha parameter for RMSprop (default: 0.99)
 - `--weight-decay`: Weight decay for regularization (default: 0)
-- `--image-size`: Input image size (auto-detected based on dataset if not specified)
 - `--shuffle-buffer-size`: Buffer size for shuffling streaming datasets (default: 10000)
 
 #### ChillAdam Specific Parameters (only used when `--optimizer chilladam`)
 - `--min-lr`: Minimum learning rate for ChillAdam (default: 1e-5)
 - `--max-lr`: Maximum learning rate for ChillAdam (default: 1.0)
+
+#### Weights & Biases Arguments
+- `--use-wandb`: Enable Weights & Biases logging (default: disabled)
+- `--wandb-project`: Wandb project name (default: "chilladam-training")
+- `--wandb-run-name`: Custom run name for easy identification (auto-generated if not specified)
+- `--wandb-watch`: Enable wandb.watch() to log model gradients and parameters (default: disabled)
+- `--wandb-watch-log-freq`: Log frequency for wandb.watch() in steps (default: 100)
 
 ## Supported Optimizers
 
@@ -189,13 +235,50 @@ All standard PyTorch optimizers are supported with their native parameters:
 - **RMSprop**: Root Mean Square Propagation
 - **Adamax, NAdam, RAdam**: Advanced Adam variants
 
-## ResNet Implementation
+## Model Architectures
 
-Full implementations from scratch:
-- **ResNet-18**: 18-layer network with BasicBlock
-- **ResNet-50**: 50-layer network with Bottleneck blocks
+### ResNet Implementation
+
+Full implementations from scratch with multiple variants:
+
+#### Basic ResNet Models
+- **ResNet-18**: 18-layer network with BasicBlock (2 layers per block)
+- **ResNet-50**: 50-layer network with Bottleneck blocks (3 layers per block)
 - Adaptive architecture for different input sizes
 - Optimized for various image sizes (64x64 to 224x224)
+
+#### SE-ResNet Models (Squeeze-and-Excitation)
+- **SE-ResNet-18**: ResNet-18 with SE blocks for channel-wise attention
+- **SE-ResNet-34**: ResNet-34 with SE blocks for improved feature representation
+- SE blocks adaptively recalibrate channel-wise feature responses
+- Reduction ratio of 16 for efficient computation
+
+#### YAT-ResNet Models (Yet Another Transformation)
+ChillAdam includes advanced YAT-ResNet models powered by the Neural Masked Networks (nmn) package:
+
+**YAT-ResNet with SE blocks:**
+- **yat_resnet18**: YAT-based ResNet-18 with SE attention mechanism
+- **yat_resnet34**: YAT-based ResNet-34 with SE attention mechanism
+
+**YAT-ResNet without SE (LayerNorm variant):**
+- **yat_resnet18_no_se**: YAT-based ResNet-18 with LayerNorm after skip connections
+- **yat_resnet34_no_se**: YAT-based ResNet-34 with LayerNorm after skip connections
+
+#### YAT Model Features
+- **Alpha Scaling**: Configurable with `use_alpha` parameter for adaptive feature scaling
+- **DropConnect**: Optional regularization with `use_dropconnect` and configurable `drop_rate`
+- **YatConv2d**: Advanced convolution layers from the nmn package
+- **YatNMN**: Neural masked network transformations for enhanced feature learning
+
+### Model Comparison
+
+| Model Family | Parameters (ImageNet) | Special Features |
+|-------------|----------------------|------------------|
+| ResNet-18 | ~11.2M | Basic residual connections |
+| ResNet-50 | ~23.5M | Deeper network with bottlenecks |
+| SE-ResNet-18 | ~11.3M | Channel attention with SE blocks |
+| YAT-ResNet-18 | ~11.3M | Advanced transformations + SE |
+| YAT-ResNet-18 (no SE) | ~11.2M | YAT transformations + LayerNorm |
 
 ## Example Output
 
