@@ -10,6 +10,9 @@ from torchvision.transforms import (
     Compose,
     RandomHorizontalFlip,
     RandomCrop,
+    AutoAugment,
+    AutoAugmentPolicy,
+    RandomErasing,
 )
 from datasets import load_dataset
 
@@ -130,8 +133,10 @@ def get_data_loaders(dataset_name="tiny-imagenet", batch_size=64, image_size=Non
         Resize((image_size, image_size)),
         RandomCrop(image_size, padding=4),
         RandomHorizontalFlip(),
+        AutoAugment(AutoAugmentPolicy.IMAGENET),
         ToTensor(),
         Normalize(mean=mean, std=std),
+        RandomErasing(),
     ])
 
     val_transforms = Compose([
