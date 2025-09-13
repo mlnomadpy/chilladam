@@ -77,7 +77,11 @@ python main.py --model resnet18 \
                --weight-decay 0.01 \
                --epochs 20 \
                --batch-size 64 \
-               --image-size 256
+               --min-lr 1e-5 \
+               --max-lr 1.0 \
+               --weight-decay 1e-4 \
+               --image-size 256 \
+               --shuffle-buffer-size 20000
 ```
 
 ### Command Line Arguments
@@ -98,6 +102,8 @@ python main.py --model resnet18 \
 - `--momentum`: Momentum for SGD and RMSprop (default: 0.9)
 - `--alpha`: Alpha parameter for RMSprop (default: 0.99)
 - `--weight-decay`: Weight decay for regularization (default: 0)
+- `--image-size`: Input image size (auto-detected based on dataset if not specified)
+- `--shuffle-buffer-size`: Buffer size for shuffling streaming datasets (default: 10000)
 
 #### ChillAdam Specific Parameters (only used when `--optimizer chilladam`)
 - `--min-lr`: Minimum learning rate for ChillAdam (default: 1e-5)
@@ -115,7 +121,7 @@ python main.py --model resnet18 \
 | **Adamax** | Adam with infinity norm | `lr`, `betas`, `eps`, `weight_decay` |
 | **NAdam** | Adam with Nesterov momentum | `lr`, `betas`, `eps`, `weight_decay` |
 | **RAdam** | Rectified Adam | `lr`, `betas`, `eps`, `weight_decay` |
-
+=======
 ## Supported Datasets
 
 | Dataset | Classes | Default Image Size | Hugging Face ID |

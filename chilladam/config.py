@@ -37,6 +37,9 @@ class Config:
         self.betas = (0.9, 0.999)
         self.weight_decay = 0
         
+        # Data loading parameters
+        self.shuffle_buffer_size = 10000  # Increased from default 1000 to better mix classes
+        
         # Wandb configuration
         self.use_wandb = False
         self.wandb_project = "chilladam-training"
@@ -95,6 +98,8 @@ def parse_args():
     # Dataset arguments
     parser.add_argument("--image-size", type=int, default=None,
                        help="Image size for resizing (auto-detected based on dataset if not specified)")
+    parser.add_argument("--shuffle-buffer-size", type=int, default=10000,
+                       help="Buffer size for shuffling streaming datasets (larger values better mix classes)")
     
     # Wandb arguments
     parser.add_argument("--use-wandb", action="store_true",
@@ -152,6 +157,9 @@ def parse_args():
     # Override image size if specified
     config.image_size = args.image_size if args.image_size is not None else default_image_size
     
+    # Set shuffle buffer size
+    config.shuffle_buffer_size = args.shuffle_buffer_size
+    
     # Set device
     if args.device:
         config.device = args.device
@@ -181,7 +189,8 @@ def print_config(config):
     print(f"Image Size: {config.image_size}")
     print(f"Number of Classes: {config.num_classes}")
     print(f"Optimizer: {config.optimizer.upper()}")
-    
+    print(f"Shuffle Buffer Size: {config.shuffle_buffer_size}")
+
     if config.optimizer == "chilladam":
         print(f"ChillAdam Min LR: {config.min_lr}")
         print(f"ChillAdam Max LR: {config.max_lr}")
@@ -192,7 +201,6 @@ def print_config(config):
         elif config.optimizer == "rmsprop":
             print(f"Momentum: {config.momentum}")
             print(f"Alpha: {config.alpha}")
-    
     print(f"Weight Decay: {config.weight_decay}")
     print(f"Use Wandb: {config.use_wandb}")
     if config.use_wandb:
