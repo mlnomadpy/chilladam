@@ -173,7 +173,7 @@ python main.py --model yat_resnet18 \
   - **YAT-ResNet (with SE)**: `yat_resnet18`, `yat_resnet34` (legacy naming, still supported)
   - **YAT-ResNet (no SE, with LayerNorm)**: `yat_resnet18_no_se`, `yat_resnet34_no_se` (legacy naming, still supported)
   
-  **Note**: New improved model naming is available programmatically:
+  **Note**: The CLI currently supports legacy naming only. New improved model naming and ResNet-50 variants are available programmatically:
   - **SE-ResNet (new)**: `se_resnet18`, `se_resnet34`, `se_resnet50`
   - **YAT-ResNet with SE (new)**: `yat_se_resnet18`, `yat_se_resnet34`, `yat_se_resnet50`
   - **YAT-ResNet plain (new)**: `yat_resnet18_plain`, `yat_resnet34_plain`, `yat_resnet50_plain`
@@ -268,7 +268,7 @@ from chilladam import (
 | `yat_resnet18_no_se` | `yat_resnet18_plain` | YAT-ResNet-18 plain |
 | `yat_resnet34_no_se` | `yat_resnet34_plain` | YAT-ResNet-34 plain |
 
-**Note**: The command-line interface (`main.py`) currently uses the legacy naming and supports models up to ResNet-34 variants. ResNet-50 models and the new naming convention are available for programmatic use. All new models include ResNet-50 variants (`se_resnet50`, `yat_se_resnet50`, `yat_resnet50_plain`).
+**Note**: The command-line interface (`main.py`) currently uses the legacy naming and supports models up to ResNet-34 variants. ResNet-50 models (`se_resnet50`, `yat_se_resnet50`, `yat_resnet50_plain`) and the new naming convention are available for programmatic use only.
 
 ## Architecture
 
