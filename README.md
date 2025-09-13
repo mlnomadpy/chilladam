@@ -1,12 +1,13 @@
 # ChillAdam
 
-A modular deep learning library featuring a custom ChillAdam optimizer and ResNet implementations from scratch.
+A modular deep learning library featuring a custom ChillAdam optimizer and ResNet implementations from scratch with efficient dataset streaming.
 
 ## Features
 
 - **ChillAdam Optimizer**: Custom optimizer with adaptive learning rates based on parameter norms
 - **ResNet from Scratch**: Full implementations of ResNet-18 and ResNet-50 architectures
 - **Modular Design**: Clean, production-ready code structure
+- **Streaming Dataset Support**: Efficient streaming of multiple datasets from Hugging Face without local downloads
 - **Multiple Dataset Support**: Support for Tiny ImageNet, ImageNet-1k, Food-101, and STL-10 from Hugging Face
 
 ## Installation
