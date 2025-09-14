@@ -36,15 +36,15 @@ def test_yat_no_se_models():
     assert output.shape == x.shape, f"YAT block no-SE output shape mismatch: {output.shape} vs {x.shape}"
     print("✓ Basic YAT Block without SE working correctly")
     
-    # Test 2: Verify LayerNorm is applied
-    print("\n2. Testing LayerNorm presence...")
-    layer_norm_found = False
+    # Test 2: Verify RMSNorm is applied
+    print("\n2. Testing RMSNorm presence...")
+    rms_norm_found = False
     for name, module in yat_block_no_se.named_modules():
-        if isinstance(module, nn.LayerNorm):
-            layer_norm_found = True
+        if isinstance(module, nn.RMSNorm):
+            rms_norm_found = True
             break
-    assert layer_norm_found, "LayerNorm not found in YAT block without SE"
-    print("✓ LayerNorm found in YAT block without SE")
+    assert rms_norm_found, "RMSNorm not found in YAT block without SE"
+    print("✓ RMSNorm found in YAT block without SE")
     
     # Test 3: Verify no SE layers are present
     print("\n3. Testing absence of SE layers...")
@@ -103,27 +103,27 @@ def test_yat_no_se_models():
     se_params = sum(p.numel() for p in se_model.parameters())
     print(f"✓ YAT ResNet-18 (no SE) parameters: {se_params:,}")
     
-    # Test 7: Ensure models have LayerNorm but no SE layers
-    print("\n7. Testing LayerNorm presence and SE absence in full models...")
+    # Test 7: Ensure models have RMSNorm but no SE layers
+    print("\n7. Testing RMSNorm presence and SE absence in full models...")
     
-    # Check if LayerNorm layers are present in no-SE model
-    layer_norm_layers_found = False
+    # Check if RMSNorm layers are present in no-SE model
+    rms_norm_layers_found = False
     se_layers_found = False
     yat_se_layers_found = False
     
     for name, module in se_model.named_modules():
-        if isinstance(module, nn.LayerNorm):
-            layer_norm_layers_found = True
+        if isinstance(module, nn.RMSNorm):
+            rms_norm_layers_found = True
         if isinstance(module, SELayer):
             se_layers_found = True
         if isinstance(module, YatSELayer):
             yat_se_layers_found = True
             
-    assert layer_norm_layers_found, "LayerNorm layers not found in no-SE YAT model"
+    assert rms_norm_layers_found, "RMSNorm layers not found in no-SE YAT model"
     assert not se_layers_found, "Unexpected SE layers found in no-SE YAT model"
     assert not yat_se_layers_found, "Unexpected YAT SE layers found in no-SE YAT model"
     
-    print("✓ LayerNorm layers found in no-SE YAT model")
+    print("✓ RMSNorm layers found in no-SE YAT model")
     print("✓ No SE layers found in no-SE YAT model (as expected)")
     print("✓ No YAT SE layers found in no-SE YAT model (as expected)")
     
