@@ -36,6 +36,7 @@ class Config:
         self.eps = 1e-8
         self.betas = (0.9, 0.999)
         self.weight_decay = 0
+        self.l1_lambda = 0  # L1 regularization strength (Lasso penalty)
         
         # Data loading parameters
         self.shuffle_buffer_size = 10000  # Increased from default 1000 to better mix classes
@@ -99,6 +100,8 @@ def parse_args():
                        help="Maximum learning rate for ChillAdam and ChillSGD")
     parser.add_argument("--weight-decay", type=float, default=0,
                        help="Weight decay for optimizers")
+    parser.add_argument("--l1-lambda", type=float, default=0,
+                       help="L1 regularization strength (Lasso penalty) for ChillAdam and ChillSGD")
     
     # Dataset arguments
     parser.add_argument("--image-size", type=int, default=None,
@@ -135,6 +138,7 @@ def parse_args():
     config.min_lr = args.min_lr
     config.max_lr = args.max_lr
     config.weight_decay = args.weight_decay
+    config.l1_lambda = args.l1_lambda
     
     # Wandb configuration
     config.use_wandb = args.use_wandb
@@ -199,6 +203,8 @@ def print_config(config):
     if config.optimizer in ["chilladam", "chillsgd"]:
         print(f"{config.optimizer.upper()} Min LR: {config.min_lr}")
         print(f"{config.optimizer.upper()} Max LR: {config.max_lr}")
+        if config.l1_lambda > 0:
+            print(f"L1 Regularization (Lasso): {config.l1_lambda}")
     else:
         print(f"Learning Rate: {config.lr}")
         if config.optimizer == "sgd":

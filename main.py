@@ -139,6 +139,7 @@ def main():
             eps=config.eps,
             betas=config.betas,
             weight_decay=config.weight_decay,
+            l1_lambda=config.l1_lambda,
             momentum=config.momentum,
             alpha=config.alpha
         )
@@ -163,6 +164,7 @@ def main():
                 'momentum': config.momentum if config.optimizer in ['sgd', 'rmsprop'] else None,
                 'alpha': config.alpha if config.optimizer == 'rmsprop' else None,
                 'weight_decay': config.weight_decay,
+                'l1_lambda': config.l1_lambda if config.optimizer in ['chilladam', 'chillsgd'] else None,
                 'image_size': config.image_size,
                 'num_classes': config.num_classes,
                 'device': config.device,
