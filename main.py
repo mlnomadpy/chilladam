@@ -27,7 +27,7 @@ import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'chilladam'))
 
 from chilladam import (
-    ChillAdam, resnet18, resnet50,
+    ChillAdam, create_scheduler, resnet18, resnet50,
     standard_se_resnet18, standard_se_resnet34, standard_se_resnet50,
     yat_resnet18, yat_resnet34, yat_resnet50,
     yat_resnet18_no_se, yat_resnet34_no_se, yat_resnet50_no_se,
@@ -144,6 +144,20 @@ def main():
             alpha=config.alpha
         )
         
+        # Create scheduler
+        scheduler = None
+        if config.use_scheduler and config.scheduler != "none":
+            print(f"Setting up {config.scheduler.upper()} learning rate scheduler...")
+            scheduler = create_scheduler(
+                scheduler_name=config.scheduler,
+                optimizer=optimizer,
+                t_max=config.t_max,
+                eta_min=config.eta_min
+            )
+            print(f"Scheduler will run for {config.t_max} epochs with eta_min={config.eta_min}")
+        else:
+            print("No learning rate scheduler enabled")
+        
         # Create trainer
         print(f"Initializing trainer with device: {config.device}")
         if config.l1_lambda > 0:
@@ -170,6 +184,10 @@ def main():
                 'image_size': config.image_size,
                 'num_classes': config.num_classes,
                 'device': config.device,
+                'use_scheduler': config.use_scheduler,
+                'scheduler': config.scheduler if config.use_scheduler else None,
+                't_max': config.t_max if config.use_scheduler and config.scheduler == 'cosine' else None,
+                'eta_min': config.eta_min if config.use_scheduler and config.scheduler == 'cosine' else None,
                 'wandb_watch': config.wandb_watch,
                 'wandb_watch_log_freq': config.wandb_watch_log_freq
             }
@@ -177,6 +195,7 @@ def main():
         trainer = Trainer(
             model=model,
             optimizer=optimizer,
+            scheduler=scheduler,
             device=config.device,
             l1_lambda=config.l1_lambda,
             use_wandb=config.use_wandb,

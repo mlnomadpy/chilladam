@@ -29,15 +29,17 @@ class Trainer:
         device: device to train on ('cuda' or 'cpu')
         criterion: loss function (default: CrossEntropyLoss)
         l1_lambda: L1 regularization strength (default: 0, no regularization)
+        scheduler: learning rate scheduler (optional)
         use_wandb: whether to use Weights & Biases logging
         wandb_config: configuration dict for wandb
         wandb_watch: whether to enable wandb.watch() for model logging
         wandb_watch_log_freq: log frequency for wandb.watch()
     """
     
-    def __init__(self, model, optimizer, device='cuda', criterion=None, l1_lambda=0, use_wandb=False, wandb_config=None, wandb_watch=False, wandb_watch_log_freq=100):
+    def __init__(self, model, optimizer, device='cuda', criterion=None, l1_lambda=0, scheduler=None, use_wandb=False, wandb_config=None, wandb_watch=False, wandb_watch_log_freq=100):
         self.model = model
         self.optimizer = optimizer
+        self.scheduler = scheduler
         self.device = device
         self.l1_lambda = l1_lambda
         
@@ -157,11 +159,20 @@ class Trainer:
             self.step_count += 1
         
         avg_train_loss = total_loss / num_samples
+        
+        # Step the learning rate scheduler if provided
+        if self.scheduler is not None:
+            self.scheduler.step()
+            
         if self.use_wandb:
-            wandb.log({
+            log_dict = {
                 "train/epoch_loss": avg_train_loss,
                 "epoch": epoch
-            }, step=self.step_count)
+            }
+            # Log current learning rate from scheduler
+            if self.scheduler is not None:
+                log_dict["scheduler/learning_rate"] = self.scheduler.get_last_lr()[0]
+            wandb.log(log_dict, step=self.step_count)
             
         return avg_train_loss
     

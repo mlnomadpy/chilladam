@@ -5,6 +5,7 @@ ChillAdam: A modular deep learning library with custom optimizer and ResNet impl
 __version__ = "0.1.0"
 
 from .optimizers import ChillAdam
+from .schedulers import create_scheduler, get_scheduler_info
 from .loss import add_l1_regularization, L1RegularizedLoss
 from .models import (
     ResNet, resnet18, resnet50,
@@ -20,6 +21,8 @@ from .models import (
 
 __all__ = [
     "ChillAdam",
+    "create_scheduler",
+    "get_scheduler_info",
     "add_l1_regularization",
     "L1RegularizedLoss",
     "ResNet", 

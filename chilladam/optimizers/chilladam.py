@@ -20,9 +20,11 @@ class ChillAdam(Optimizer):
         betas: coefficients used for computing running averages of gradient
                and its square (default: (0.9, 0.999))
         weight_decay: weight decay (L2 penalty) (default: 0)
+        lr: base learning rate for scheduler compatibility (default: max_lr)
+            This parameter allows learning rate schedulers to work with ChillAdam
     """
     
-    def __init__(self, params, min_lr=1e-5, max_lr=1.0, eps=1e-8, betas=(0.9, 0.999), weight_decay=0):
+    def __init__(self, params, min_lr=1e-5, max_lr=1.0, eps=1e-8, betas=(0.9, 0.999), weight_decay=0, lr=None):
         if not 0.0 <= min_lr:
             raise ValueError(f"Invalid min_lr: {min_lr}")
         if not 0.0 <= max_lr:
@@ -36,7 +38,11 @@ class ChillAdam(Optimizer):
         if not 0.0 <= weight_decay:
             raise ValueError(f"Invalid weight_decay: {weight_decay}")
 
-        defaults = dict(min_lr=min_lr, max_lr=max_lr, eps=eps, betas=betas, weight_decay=weight_decay)
+        # Set lr to the max_lr if not provided (for scheduler compatibility)
+        if lr is None:
+            lr = max_lr
+        
+        defaults = dict(min_lr=min_lr, max_lr=max_lr, eps=eps, betas=betas, weight_decay=weight_decay, lr=lr)
         super(ChillAdam, self).__init__(params, defaults)
 
     @torch.no_grad()
@@ -54,6 +60,7 @@ class ChillAdam(Optimizer):
 
         for group in self.param_groups:
             min_lr, max_lr, eps, betas, weight_decay = group['min_lr'], group['max_lr'], group['eps'], group['betas'], group['weight_decay']
+            scheduler_lr = group['lr']  # Learning rate from scheduler (or initial lr)
 
             for p in group['params']:
                 if p.grad is None:
@@ -85,8 +92,12 @@ class ChillAdam(Optimizer):
                 exp_avg_sq.mul_(beta2).addcmul_(grad_normalized, grad_normalized, value=1 - beta2)
 
                 param_norm = p.norm(p=2).clamp(min=eps)
-                lr = 1.0 / param_norm
-                lr = lr.clamp(min=min_lr, max=max_lr)
+                adaptive_lr = 1.0 / param_norm
+                adaptive_lr = adaptive_lr.clamp(min=min_lr, max=max_lr)
+                
+                # Scale the adaptive learning rate by the scheduler's learning rate
+                # This allows schedulers to influence ChillAdam's learning rate
+                lr = adaptive_lr * (scheduler_lr / max_lr)  # Normalize by max_lr to maintain scaling
                 self.state[p]["lr"] = lr.item()
 
                 denom = (exp_avg_sq.sqrt() / (bias_correction2 ** 0.5)).add_(eps)
