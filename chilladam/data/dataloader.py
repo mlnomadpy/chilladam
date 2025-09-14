@@ -2,6 +2,7 @@
 Data loading utilities for multiple datasets from Hugging Face.
 """
 
+import torch
 from torch.utils.data import DataLoader
 from torchvision.transforms import (
     ToTensor,
@@ -148,23 +149,31 @@ def get_data_loaders(dataset_name="tiny-imagenet", batch_size=64, image_size=Non
     # Apply transformations to the datasets
     # For streaming datasets (IterableDataset), we use map instead of set_transform
     def transform_train_batch(examples):
+        # Transform images and return as tensors directly stacked
+        images = [train_transforms(image.convert("RGB")) for image in examples['image']]
         return {
-            'pixel_values': [train_transforms(image.convert("RGB")) for image in examples['image']],
-            'label': examples['label']
+            'pixel_values': torch.stack(images),
+            'label': torch.tensor(examples['label'])
         }
     
     def transform_val_batch(examples):
+        # Transform images and return as tensors directly stacked
+        images = [val_transforms(image.convert("RGB")) for image in examples['image']]
         return {
-            'pixel_values': [val_transforms(image.convert("RGB")) for image in examples['image']],
-            'label': examples['label']
+            'pixel_values': torch.stack(images), 
+            'label': torch.tensor(examples['label'])
         }
     
     train_dataset = train_dataset.map(transform_train_batch, batched=True, remove_columns=['image'])
     val_dataset = val_dataset.map(transform_val_batch, batched=True, remove_columns=['image'])
+    
+    # Use HuggingFace tensor formatting for consistent batch shapes
+    train_dataset.set_format(type="torch", columns=["pixel_values", "label"])
+    val_dataset.set_format(type="torch", columns=["pixel_values", "label"])
 
     # Create data loaders - no shuffle for train since streaming datasets handle shuffling differently
-    train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=False)
-    val_dataloader = DataLoader(val_dataset, batch_size=batch_size)
+    train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=False, drop_last=True)
+    val_dataloader = DataLoader(val_dataset, batch_size=batch_size, drop_last=True)
 
     return train_dataloader, val_dataloader
 
