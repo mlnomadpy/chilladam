@@ -146,6 +146,8 @@ def main():
         
         # Create trainer
         print(f"Initializing trainer with device: {config.device}")
+        if config.l1_lambda > 0:
+            print(f"L1 regularization enabled with lambda = {config.l1_lambda}")
         
         # Prepare wandb config if using wandb
         wandb_config = None
@@ -176,6 +178,7 @@ def main():
             model=model,
             optimizer=optimizer,
             device=config.device,
+            l1_lambda=config.l1_lambda,
             use_wandb=config.use_wandb,
             wandb_config=wandb_config,
             wandb_watch=config.wandb_watch,

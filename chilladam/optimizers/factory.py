@@ -19,8 +19,20 @@ def create_optimizer(optimizer_name, model_parameters, **kwargs):
         
     Returns:
         torch.optim.Optimizer: Created optimizer
+        
+    Note:
+        L1 regularization (l1_lambda) is handled by the loss function, not the optimizer.
+        If l1_lambda is provided, it will be ignored with a warning.
     """
     optimizer_name = optimizer_name.lower()
+    
+    # Check for l1_lambda and warn if provided
+    if 'l1_lambda' in kwargs and kwargs['l1_lambda'] > 0:
+        print(f"Warning: l1_lambda={kwargs['l1_lambda']} was provided but will be ignored.")
+        print("L1 regularization is now handled by the loss function, not the optimizer.")
+        print("Please use L1RegularizedLoss in your training code to enable L1 regularization.")
+        # Remove l1_lambda from kwargs to avoid errors
+        kwargs = {k: v for k, v in kwargs.items() if k != 'l1_lambda'}
     
     if optimizer_name == "chilladam":
         return ChillAdam(

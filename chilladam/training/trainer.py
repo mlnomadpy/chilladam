@@ -6,6 +6,12 @@ import torch
 import torch.nn as nn
 from tqdm import tqdm
 
+# Import L1RegularizedLoss - try relative import first, fall back to absolute
+try:
+    from ..loss import L1RegularizedLoss
+except ImportError:
+    from chilladam.loss import L1RegularizedLoss
+
 try:
     import wandb
     WANDB_AVAILABLE = True
@@ -22,17 +28,28 @@ class Trainer:
         optimizer: optimizer for training
         device: device to train on ('cuda' or 'cpu')
         criterion: loss function (default: CrossEntropyLoss)
+        l1_lambda: L1 regularization strength (default: 0, no regularization)
         use_wandb: whether to use Weights & Biases logging
         wandb_config: configuration dict for wandb
         wandb_watch: whether to enable wandb.watch() for model logging
         wandb_watch_log_freq: log frequency for wandb.watch()
     """
     
-    def __init__(self, model, optimizer, device='cuda', criterion=None, use_wandb=False, wandb_config=None, wandb_watch=False, wandb_watch_log_freq=100):
+    def __init__(self, model, optimizer, device='cuda', criterion=None, l1_lambda=0, use_wandb=False, wandb_config=None, wandb_watch=False, wandb_watch_log_freq=100):
         self.model = model
         self.optimizer = optimizer
         self.device = device
-        self.criterion = criterion or nn.CrossEntropyLoss()
+        self.l1_lambda = l1_lambda
+        
+        # Set up the loss function with L1 regularization if needed
+        base_criterion = criterion or nn.CrossEntropyLoss()
+        if l1_lambda > 0:
+            self.criterion = L1RegularizedLoss(base_criterion, l1_lambda=l1_lambda)
+            self.use_l1_regularization = True
+        else:
+            self.criterion = base_criterion
+            self.use_l1_regularization = False
+            
         self.use_wandb = use_wandb and WANDB_AVAILABLE
         self.wandb_watch = wandb_watch
         self.wandb_watch_log_freq = wandb_watch_log_freq
@@ -98,7 +115,12 @@ class Trainer:
             # Forward pass
             self.optimizer.zero_grad()
             outputs = self.model(inputs)
-            loss = self.criterion(outputs, labels)
+            
+            # Calculate loss (with L1 regularization if enabled)
+            if self.use_l1_regularization:
+                loss = self.criterion(outputs, labels, self.model)
+            else:
+                loss = self.criterion(outputs, labels)
             
             # Backward pass
             loss.backward()
@@ -160,7 +182,12 @@ class Trainer:
                 
                 # Forward pass
                 outputs = self.model(inputs)
-                loss = self.criterion(outputs, labels)
+                
+                # Calculate loss (with L1 regularization if enabled)
+                if self.use_l1_regularization:
+                    loss = self.criterion(outputs, labels, self.model)
+                else:
+                    loss = self.criterion(outputs, labels)
                 
                 # Accumulate loss
                 total_loss += loss.item() * inputs.size(0)
