@@ -59,6 +59,12 @@ python main.py --optimizer sgd --lr 0.01 --momentum 0.9
 
 # AdamW with weight decay
 python main.py --optimizer adamw --lr 0.002 --weight-decay 0.01
+
+# ChillAdam with Lasso (L1) regularization for sparsity
+python main.py --optimizer chilladam --l1-lambda 0.01
+
+# ChillSGD with Lasso (L1) regularization
+python main.py --optimizer chillsgd --l1-lambda 0.005 --min-lr 1e-5 --max-lr 0.1
 ```
 
 Train with ResNet-50 on ImageNet-1k:
@@ -133,6 +139,15 @@ python main.py --model resnet18 \
                --weight-decay 1e-4 \
                --image-size 256 \
                --shuffle-buffer-size 20000
+
+# ChillAdam with L1 regularization for sparse weights
+python main.py --model yat_resnet18 \
+               --dataset tiny-imagenet \
+               --optimizer chilladam \
+               --l1-lambda 0.01 \
+               --weight-decay 1e-4 \
+               --epochs 15 \
+               --batch-size 64
 ```
 
 ### Weights & Biases Integration
@@ -198,6 +213,7 @@ python main.py --model yat_resnet18 \
 #### ChillAdam & ChillSGD Specific Parameters (used when `--optimizer chilladam` or `--optimizer chillsgd`)
 - `--min-lr`: Minimum learning rate for ChillAdam and ChillSGD (default: 1e-5)
 - `--max-lr`: Maximum learning rate for ChillAdam and ChillSGD (default: 1.0)
+- `--l1-lambda`: L1 regularization strength (Lasso penalty) for ChillAdam and ChillSGD (default: 0)
 
 #### Weights & Biases Arguments
 - `--use-wandb`: Enable Weights & Biases logging (default: disabled)
@@ -210,8 +226,8 @@ python main.py --model yat_resnet18 \
 
 | Optimizer | Description | Key Parameters |
 |-----------|-------------|----------------|
-| **ChillAdam** | Custom adaptive optimizer with parameter norm-based learning rates | `min_lr`, `max_lr`, `eps`, `betas`, `weight_decay` |
-| **ChillSGD** | Custom SGD with gradient normalization and adaptive learning rates (no momentum) | `min_lr`, `max_lr`, `eps`, `weight_decay` |
+| **ChillAdam** | Custom adaptive optimizer with parameter norm-based learning rates | `min_lr`, `max_lr`, `eps`, `betas`, `weight_decay`, `l1_lambda` |
+| **ChillSGD** | Custom SGD with gradient normalization and adaptive learning rates (no momentum) | `min_lr`, `max_lr`, `eps`, `weight_decay`, `l1_lambda` |
 | **Adam** | Adaptive moment estimation | `lr`, `betas`, `eps`, `weight_decay` |
 | **AdamW** | Adam with decoupled weight decay | `lr`, `betas`, `eps`, `weight_decay` |
 | **SGD** | Stochastic Gradient Descent | `lr`, `momentum`, `weight_decay` |
@@ -294,6 +310,7 @@ The ChillAdam optimizer adapts learning rates based on parameter norms, providin
 - Gradient normalization
 - Momentum-based updates
 - Configurable learning rate bounds
+- **Lasso (L1) regularization**: Optional L1 penalty for weight sparsity
 
 ### ChillSGD Optimizer
 
@@ -302,6 +319,16 @@ The ChillSGD optimizer combines SGD with the "chill" mechanism from ChillAdam:
 - **Adaptive learning rate**: Uses inverse of parameter norm instead of fixed learning rate
 - **No momentum**: Pure SGD without momentum for simplicity
 - **Configurable bounds**: Min/max learning rate constraints for stability
+- **Lasso (L1) regularization**: Optional L1 penalty for weight sparsity
+
+### Lasso (L1) Regularization
+
+Both ChillAdam and ChillSGD optimizers now support Lasso regularization:
+- **Purpose**: Promotes sparsity in weight matrices by driving some weights to exactly zero
+- **Parameter**: `l1_lambda` controls the strength of L1 penalty
+- **Usage**: `--l1-lambda 0.01` adds L1 regularization to all weight matrices
+- **Benefits**: Can improve model generalization and reduce overfitting
+- **Complementary**: Works alongside existing L2 weight decay (`weight_decay` parameter)
 
 ### PyTorch Built-in Optimizers
 
