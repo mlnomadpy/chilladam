@@ -104,13 +104,9 @@ class Trainer:
         num_samples = 0
         
         for batch_idx, batch in enumerate(tqdm(train_dataloader, desc="Training")):
-            # Handle different batch formats
-            if isinstance(batch["pixel_values"], list):
-                inputs = torch.stack(batch["pixel_values"]).to(self.device)
-            else:
-                inputs = batch["pixel_values"].to(self.device)
-            
-            labels = torch.tensor(batch["label"]).to(self.device)
+            # Data is already formatted as tensors by HuggingFace
+            inputs = batch["pixel_values"].to(self.device)
+            labels = batch["label"].to(self.device)
             
             # Forward pass
             self.optimizer.zero_grad()
@@ -188,13 +184,9 @@ class Trainer:
         
         with torch.no_grad():
             for batch in tqdm(val_dataloader, desc="Validation"):
-                # Handle different batch formats
-                if isinstance(batch["pixel_values"], list):
-                    inputs = torch.stack(batch["pixel_values"]).to(self.device)
-                else:
-                    inputs = batch["pixel_values"].to(self.device)
-                
-                labels = torch.tensor(batch["label"]).to(self.device)
+                # Data is already formatted as tensors by HuggingFace
+                inputs = batch["pixel_values"].to(self.device)
+                labels = batch["label"].to(self.device)
                 
                 # Forward pass
                 outputs = self.model(inputs)
