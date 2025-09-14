@@ -118,9 +118,13 @@ class Trainer:
             
             # Calculate loss (with L1 regularization if enabled)
             if self.use_l1_regularization:
-                loss = self.criterion(outputs, labels, self.model)
+                # Calculate separate loss components for logging
+                base_loss, l1_loss, total_loss_tensor = self.criterion.compute_separate_losses(outputs, labels, self.model)
+                loss = total_loss_tensor
             else:
-                loss = self.criterion(outputs, labels)
+                base_loss = self.criterion(outputs, labels)
+                l1_loss = None
+                loss = base_loss
             
             # Backward pass
             loss.backward()
@@ -134,8 +138,13 @@ class Trainer:
             if self.use_wandb:
                 log_dict = {
                     "train/step_loss": loss.item(),
+                    "train/step_cross_entropy_loss": base_loss.item(),
                     "train/step": self.step_count,
                 }
+                
+                # Log L1 loss if regularization is enabled
+                if self.use_l1_regularization and l1_loss is not None:
+                    log_dict["train/step_l1_loss"] = l1_loss.item()
                 
                 if epoch is not None:
                     log_dict["train/epoch"] = epoch
@@ -185,9 +194,13 @@ class Trainer:
                 
                 # Calculate loss (with L1 regularization if enabled)
                 if self.use_l1_regularization:
-                    loss = self.criterion(outputs, labels, self.model)
+                    # Calculate separate loss components for logging
+                    base_loss, l1_loss, total_loss_tensor = self.criterion.compute_separate_losses(outputs, labels, self.model)
+                    loss = total_loss_tensor
                 else:
-                    loss = self.criterion(outputs, labels)
+                    base_loss = self.criterion(outputs, labels)
+                    l1_loss = None
+                    loss = base_loss
                 
                 # Accumulate loss
                 total_loss += loss.item() * inputs.size(0)

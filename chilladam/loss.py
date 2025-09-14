@@ -74,6 +74,34 @@ class L1RegularizedLoss:
         base_loss = self.base_loss_fn(predictions, targets)
         return add_l1_regularization(base_loss, model, self.l1_lambda)
     
+    def compute_separate_losses(self, predictions, targets, model):
+        """
+        Compute the base loss and L1 loss separately.
+        
+        Args:
+            predictions: Model predictions
+            targets: Ground truth targets
+            model (torch.nn.Module): The model whose parameters should be regularized
+            
+        Returns:
+            tuple: (base_loss, l1_loss, total_loss) where:
+                - base_loss: The base loss (e.g., cross entropy)
+                - l1_loss: The L1 regularization penalty
+                - total_loss: The sum of base_loss + l1_loss
+        """
+        base_loss = self.base_loss_fn(predictions, targets)
+        
+        if self.l1_lambda <= 0:
+            l1_loss = torch.tensor(0.0, device=base_loss.device, dtype=base_loss.dtype)
+            total_loss = base_loss
+        else:
+            # Calculate L1 penalty separately
+            l1_norm = sum(p.abs().sum() for p in model.parameters())
+            l1_loss = self.l1_lambda * l1_norm
+            total_loss = base_loss + l1_loss
+        
+        return base_loss, l1_loss, total_loss
+    
     def set_l1_lambda(self, l1_lambda):
         """Update the L1 regularization strength."""
         if l1_lambda < 0:
