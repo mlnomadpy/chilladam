@@ -12,6 +12,25 @@ from nmn.torch.nmn import YatNMN
 from nmn.torch.conv import YatConv2d
 
 
+def apply_rms_norm_2d(x, rms_norm):
+    """
+    Apply RMSNorm to 2D feature maps by permuting dimensions.
+    
+    Args:
+        x: Input tensor of shape (N, C, H, W)
+        rms_norm: RMSNorm layer expecting (N, H, W, C)
+    
+    Returns:
+        Output tensor of shape (N, C, H, W)
+    """
+    # Permute from (N, C, H, W) to (N, H, W, C) for RMSNorm
+    b, c, h, w = x.size()
+    x = x.permute(0, 2, 3, 1)  # (N, H, W, C)
+    x = rms_norm(x)            # Apply RMSNorm over channel dimension
+    x = x.permute(0, 3, 1, 2)  # Back to (N, C, H, W)
+    return x
+
+
 class SELayer(nn.Module):
     """Squeeze-and-Excitation block."""
     def __init__(self, channel, reduction=16):
@@ -167,7 +186,7 @@ class BottleneckYATBlock(nn.Module):
 
 
 class BottleneckYATBlockNoSE(nn.Module):
-    """A bottleneck residual block for the YATConvNet, without Squeeze-and-Excitation, with LayerNorm after skip connection."""
+    """A bottleneck residual block for the YATConvNet, without Squeeze-and-Excitation, with RMSNorm after skip connection."""
     expansion = 4
 
     def __init__(self, in_planes, planes, stride=1, use_alpha=True, use_dropconnect=False, drop_rate=0.1):
@@ -180,8 +199,8 @@ class BottleneckYATBlockNoSE(nn.Module):
                                    drop_rate=drop_rate, bias=False, epsilon=0.007)
         self.lin_conv = nn.Conv2d(planes, self.expansion * planes, kernel_size=1, stride=1, padding=0, bias=False)
         
-        # LayerNorm for post-skip connection normalization
-        self.layer_norm = nn.LayerNorm(self.expansion * planes)
+        # RMSNorm for post-skip connection normalization
+        self.rms_norm = nn.RMSNorm(self.expansion * planes, elementwise_affine=True)
 
         self.shortcut = nn.Sequential()
         if stride != 1 or in_planes != self.expansion * planes:
@@ -196,17 +215,14 @@ class BottleneckYATBlockNoSE(nn.Module):
         out = self.lin_conv(out)
         out += identity
         
-        # Apply LayerNorm after skip connection
-        b, c, h, w = out.size()
-        out = out.permute(0, 2, 3, 1)  # (N, H, W, C)
-        out = self.layer_norm(out)     # Apply LayerNorm over channel dimension
-        out = out.permute(0, 3, 1, 2)  # Back to (N, C, H, W)
+        # Apply RMSNorm after skip connection
+        out = apply_rms_norm_2d(out, self.rms_norm)
         
         return out
 
 
 class BasicYATBlockNoSE(nn.Module):
-    """A basic residual block for the YATConvNet, without Squeeze-and-Excitation, with LayerNorm after skip connection."""
+    """A basic residual block for the YATConvNet, without Squeeze-and-Excitation, with RMSNorm after skip connection."""
     expansion = 1
 
     def __init__(self, in_planes, planes, stride=1, use_alpha=True, use_dropconnect=False, drop_rate=0.1):
@@ -216,9 +232,9 @@ class BasicYATBlockNoSE(nn.Module):
                                   drop_rate=drop_rate, bias=False, epsilon=0.007)
         self.lin_conv = nn.Conv2d(planes, planes, kernel_size=3, stride=1, padding=1, bias=False)
         
-        # LayerNorm for post-skip connection normalization
+        # RMSNorm for post-skip connection normalization
         # Normalize over channel dimension for 2D feature maps
-        self.layer_norm = nn.LayerNorm(self.expansion * planes)
+        self.rms_norm = nn.RMSNorm(self.expansion * planes, elementwise_affine=True)
 
         self.shortcut = nn.Sequential()
         if stride != 1 or in_planes != self.expansion * planes:
@@ -232,13 +248,10 @@ class BasicYATBlockNoSE(nn.Module):
         out = self.lin_conv(out)
         out += identity
         
-        # Apply LayerNorm after skip connection
-        # LayerNorm expects input of shape (N, ..., normalized_shape)
+        # Apply RMSNorm after skip connection
+        # RMSNorm expects input of shape (N, ..., normalized_shape)
         # For 2D feature maps (N, C, H, W), we need to permute to (N, H, W, C) for channel normalization
-        b, c, h, w = out.size()
-        out = out.permute(0, 2, 3, 1)  # (N, H, W, C)
-        out = self.layer_norm(out)     # Apply LayerNorm over channel dimension
-        out = out.permute(0, 3, 1, 2)  # Back to (N, C, H, W)
+        out = apply_rms_norm_2d(out, self.rms_norm)
         
         return out
 
@@ -404,7 +417,7 @@ def yat_se_resnet50(num_classes=200, use_alpha=True, use_dropconnect=False, drop
 # YAT ResNet models without Squeeze-and-Excitation (plain YAT) - these are the current yat_resnet*_no_se functions
 def yat_resnet18_plain(num_classes=200, use_alpha=True, use_dropconnect=False, drop_rate=0.1):
     """
-    YAT-based ResNet-18 without Squeeze-and-Excitation blocks, with LayerNorm after skip connection.
+    YAT-based ResNet-18 without Squeeze-and-Excitation blocks, with RMSNorm after skip connection.
     
     Arguments:
         num_classes: number of output classes
@@ -421,7 +434,7 @@ def yat_resnet18_plain(num_classes=200, use_alpha=True, use_dropconnect=False, d
 
 def yat_resnet34_plain(num_classes=200, use_alpha=True, use_dropconnect=False, drop_rate=0.1):
     """
-    YAT-based ResNet-34 without Squeeze-and-Excitation blocks, with LayerNorm after skip connection.
+    YAT-based ResNet-34 without Squeeze-and-Excitation blocks, with RMSNorm after skip connection.
     
     Arguments:
         num_classes: number of output classes
@@ -438,7 +451,7 @@ def yat_resnet34_plain(num_classes=200, use_alpha=True, use_dropconnect=False, d
 
 def yat_resnet50_plain(num_classes=200, use_alpha=True, use_dropconnect=False, drop_rate=0.1):
     """
-    YAT-based ResNet-50 without Squeeze-and-Excitation blocks, with LayerNorm after skip connection.
+    YAT-based ResNet-50 without Squeeze-and-Excitation blocks, with RMSNorm after skip connection.
     
     Arguments:
         num_classes: number of output classes
@@ -528,7 +541,7 @@ def yat_resnet50(num_classes=200, use_alpha=True, use_dropconnect=False, drop_ra
 
 def yat_resnet18_no_se(num_classes=200, use_alpha=True, use_dropconnect=False, drop_rate=0.1):
     """
-    YAT-based ResNet-18 without Squeeze-and-Excitation blocks, with LayerNorm after skip connection.
+    YAT-based ResNet-18 without Squeeze-and-Excitation blocks, with RMSNorm after skip connection.
     
     Arguments:
         num_classes: number of output classes
@@ -542,7 +555,7 @@ def yat_resnet18_no_se(num_classes=200, use_alpha=True, use_dropconnect=False, d
 
 def yat_resnet34_no_se(num_classes=200, use_alpha=True, use_dropconnect=False, drop_rate=0.1):
     """
-    YAT-based ResNet-34 without Squeeze-and-Excitation blocks, with LayerNorm after skip connection.
+    YAT-based ResNet-34 without Squeeze-and-Excitation blocks, with RMSNorm after skip connection.
     
     Arguments:
         num_classes: number of output classes
@@ -556,7 +569,7 @@ def yat_resnet34_no_se(num_classes=200, use_alpha=True, use_dropconnect=False, d
 
 def yat_resnet50_no_se(num_classes=200, use_alpha=True, use_dropconnect=False, drop_rate=0.1):
     """
-    YAT-based ResNet-50 without Squeeze-and-Excitation blocks, with LayerNorm after skip connection.
+    YAT-based ResNet-50 without Squeeze-and-Excitation blocks, with RMSNorm after skip connection.
     
     Arguments:
         num_classes: number of output classes
