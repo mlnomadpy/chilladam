@@ -59,8 +59,11 @@ def parse_args():
     
     # Model arguments
     parser.add_argument("--model", type=str, 
-                       choices=["resnet18", "resnet50", "standard_se_resnet18", "standard_se_resnet34", 
-                               "yat_resnet18", "yat_resnet34", "yat_resnet18_no_se", "yat_resnet34_no_se"], 
+                       choices=["resnet18", "resnet50", 
+                               "standard_se_resnet18", "standard_se_resnet34", "standard_se_resnet50",
+                               "yat_resnet18", "yat_resnet34", "yat_resnet50",
+                               "yat_resnet18_no_se", "yat_resnet34_no_se", "yat_resnet50_no_se",
+                               "yat_se_resnet18", "yat_se_resnet34", "yat_se_resnet50"], 
                        default="resnet18", help="Model architecture to use")
     
     # Dataset arguments

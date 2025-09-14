@@ -30,7 +30,8 @@ from chilladam import (
     ChillAdam, resnet18, resnet50,
     standard_se_resnet18, standard_se_resnet34, standard_se_resnet50,
     yat_resnet18, yat_resnet34, yat_resnet50,
-    yat_resnet18_no_se, yat_resnet34_no_se, yat_resnet50_no_se
+    yat_resnet18_no_se, yat_resnet34_no_se, yat_resnet50_no_se,
+    yat_se_resnet18, yat_se_resnet34, yat_se_resnet50
 )
 from chilladam.optimizers import create_optimizer
 from chilladam.data import get_data_loaders
@@ -83,11 +84,22 @@ def create_model(model_name, num_classes, input_size):
     elif model_name == "yat_resnet50_no_se":
         print("Creating YAT-ResNet-50 model (no SE) from scratch...")
         return yat_resnet50_no_se(num_classes=num_classes)
+    elif model_name == "yat_se_resnet18":
+        print("Creating YAT SE-ResNet-18 model from scratch...")
+        return yat_se_resnet18(num_classes=num_classes)
+    elif model_name == "yat_se_resnet34":
+        print("Creating YAT SE-ResNet-34 model from scratch...")
+        return yat_se_resnet34(num_classes=num_classes)
+    elif model_name == "yat_se_resnet50":
+        print("Creating YAT SE-ResNet-50 model from scratch...")
+        return yat_se_resnet50(num_classes=num_classes)
     else:
         supported_models = [
-            "resnet18", "resnet50", "standard_se_resnet18", "standard_se_resnet34", "standard_se_resnet50",
+            "resnet18", "resnet50", 
+            "standard_se_resnet18", "standard_se_resnet34", "standard_se_resnet50",
             "yat_resnet18", "yat_resnet34", "yat_resnet50", 
-            "yat_resnet18_no_se", "yat_resnet34_no_se", "yat_resnet50_no_se"
+            "yat_resnet18_no_se", "yat_resnet34_no_se", "yat_resnet50_no_se",
+            "yat_se_resnet18", "yat_se_resnet34", "yat_se_resnet50"
         ]
         raise ValueError(f"Unknown model: {model_name}. Choose from: {supported_models}")
 
