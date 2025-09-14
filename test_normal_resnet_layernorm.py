@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 """
-Test script to verify that normal ResNet models have been updated to use LayerNorm
-instead of BatchNorm and have no bias in conv/linear layers.
+Test script to verify that ResNet models have been updated to use RMSNorm
+instead of LayerNorm and include dropout functionality.
 
 This test validates the requirements:
-1. Replace BatchNorm with LayerNorm (with no bias)  
-2. Remove bias from all linear and conv layers
+1. Replace LayerNorm with RMSNorm  
+2. Add dropout functionality
+3. Remove bias from all linear and conv layers
 """
 
 import sys
@@ -13,13 +14,26 @@ sys.path.append('/home/runner/work/chilladam/chilladam')
 
 import torch
 import torch.nn as nn
-from chilladam.models.resnet import resnet18, resnet50
+
+# Import the resnet module directly to avoid __init__ dependencies
+import importlib.util
+
+# Load resnet.py directly
+resnet_path = '/home/runner/work/chilladam/chilladam/chilladam/models/resnet.py'
+spec = importlib.util.spec_from_file_location("resnet", resnet_path)
+resnet_module = importlib.util.module_from_spec(spec)
+sys.modules["resnet"] = resnet_module
+spec.loader.exec_module(resnet_module)
+
+resnet18 = resnet_module.resnet18
+resnet50 = resnet_module.resnet50
+apply_rms_norm_2d = resnet_module.apply_rms_norm_2d
 
 
-def test_layernorm_and_bias_requirements():
-    """Test that ResNet models meet the LayerNorm and no-bias requirements."""
+def test_rmsnorm_and_bias_requirements():
+    """Test that ResNet models meet the RMSNorm and no-bias requirements."""
     
-    print("=== Testing Normal ResNet LayerNorm and No-Bias Requirements ===\n")
+    print("=== Testing ResNet RMSNorm and No-Bias Requirements ===\n")
     
     models_to_test = [
         (resnet18, "ResNet-18"),
@@ -32,14 +46,15 @@ def test_layernorm_and_bias_requirements():
         print(f"Testing {model_name}...")
         
         # Create model
-        model = model_fn(num_classes=10, input_size=32)
+        model = model_fn(num_classes=10, input_size=32, dropout_rate=0.1)
         
         # Count layers and check requirements
         conv_with_bias = []
         linear_with_bias = []
         batchnorm_layers = []
         layernorm_count = 0
-        layernorm_with_bias = []
+        rmsnorm_count = 0
+        dropout_count = 0
         
         for name, module in model.named_modules():
             if isinstance(module, nn.Conv2d):
@@ -52,8 +67,10 @@ def test_layernorm_and_bias_requirements():
                 batchnorm_layers.append(name)
             elif isinstance(module, nn.LayerNorm):
                 layernorm_count += 1
-                if module.bias is not None:
-                    layernorm_with_bias.append(name)
+            elif isinstance(module, nn.RMSNorm):
+                rmsnorm_count += 1
+            elif isinstance(module, nn.Dropout):
+                dropout_count += 1
         
         # Check requirements
         test_passed = True
@@ -65,28 +82,35 @@ def test_layernorm_and_bias_requirements():
         else:
             print(f"  ✅ No BatchNorm2d layers found")
         
-        # Requirement 2: LayerNorm layers present
-        if layernorm_count == 0:
-            print(f"  ❌ No LayerNorm layers found")
+        # Requirement 2: No LayerNorm layers (replaced with RMSNorm)
+        if layernorm_count > 0:
+            print(f"  ❌ Found {layernorm_count} LayerNorm layers (should be replaced with RMSNorm)")
             test_passed = False
         else:
-            print(f"  ✅ Found {layernorm_count} LayerNorm layers")
+            print(f"  ✅ No LayerNorm layers found (replaced with RMSNorm)")
         
-        # Requirement 3: LayerNorm has no bias
-        if layernorm_with_bias:
-            print(f"  ❌ LayerNorm layers with bias: {layernorm_with_bias}")
+        # Requirement 3: RMSNorm layers present
+        if rmsnorm_count == 0:
+            print(f"  ❌ No RMSNorm layers found")
             test_passed = False
         else:
-            print(f"  ✅ All LayerNorm layers have bias=False")
+            print(f"  ✅ Found {rmsnorm_count} RMSNorm layers")
         
-        # Requirement 4: No bias in Conv2d layers
+        # Requirement 4: Dropout layers present
+        if dropout_count == 0:
+            print(f"  ❌ No Dropout layers found")
+            test_passed = False
+        else:
+            print(f"  ✅ Found {dropout_count} Dropout layers")
+        
+        # Requirement 5: No bias in Conv2d layers
         if conv_with_bias:
             print(f"  ❌ Conv2d layers with bias: {conv_with_bias}")
             test_passed = False
         else:
             print(f"  ✅ All Conv2d layers have bias=False")
         
-        # Requirement 5: No bias in Linear layers
+        # Requirement 6: No bias in Linear layers
         if linear_with_bias:
             print(f"  ❌ Linear layers with bias: {linear_with_bias}")
             test_passed = False
@@ -120,52 +144,49 @@ def test_layernorm_and_bias_requirements():
     return all_tests_passed
 
 
-def test_layernorm_functionality():
-    """Test that LayerNorm is applied correctly to 2D feature maps."""
+def test_rmsnorm_functionality():
+    """Test that RMSNorm is applied correctly to 2D feature maps."""
     
-    print("=== Testing LayerNorm 2D Functionality ===\n")
-    
-    from chilladam.models.resnet import apply_layer_norm_2d
-    
-    # Create a test LayerNorm and input
-    channels = 64
-    layer_norm = nn.LayerNorm(channels, bias=False)
-    x = torch.randn(2, channels, 8, 8)  # Batch=2, Channels=64, H=8, W=8
-    
-    print(f"Input shape: {x.shape}")
+    print("=== Testing RMSNorm 2D Functionality ===\n")
     
     try:
-        output = apply_layer_norm_2d(x, layer_norm)
+        channels = 64
+        rms_norm = nn.RMSNorm(channels, elementwise_affine=True)
+        x = torch.randn(2, channels, 8, 8)  # Batch=2, Channels=64, H=8, W=8
+        
+        print(f"Input shape: {x.shape}")
+        
+        output = apply_rms_norm_2d(x, rms_norm)
         print(f"Output shape: {output.shape}")
         
         if output.shape == x.shape:
-            print("✅ LayerNorm 2D helper function works correctly")
+            print("✅ RMSNorm 2D helper function works correctly")
             return True
         else:
             print(f"❌ Shape mismatch: expected {x.shape}, got {output.shape}")
             return False
             
     except Exception as e:
-        print(f"❌ LayerNorm 2D helper function failed: {e}")
+        print(f"❌ RMSNorm 2D helper function failed: {e}")
         return False
 
 
 if __name__ == "__main__":
-    print("Testing Normal ResNet Models with LayerNorm Requirements\n")
+    print("Testing ResNet Models with RMSNorm and Dropout Requirements\n")
     
-    # Test LayerNorm functionality
-    layernorm_test = test_layernorm_functionality()
+    # Test RMSNorm functionality
+    rmsnorm_test = test_rmsnorm_functionality()
     
     # Test model requirements
-    requirements_test = test_layernorm_and_bias_requirements()
+    requirements_test = test_rmsnorm_and_bias_requirements()
     
     # Final result
     print("=== FINAL TEST SUMMARY ===")
-    print(f"LayerNorm functionality test: {'PASSED' if layernorm_test else 'FAILED'}")
+    print(f"RMSNorm functionality test: {'PASSED' if rmsnorm_test else 'FAILED'}")
     print(f"Model requirements test: {'PASSED' if requirements_test else 'FAILED'}")
     
-    if layernorm_test and requirements_test:
-        print("\n🎉 ALL TESTS PASSED! Normal ResNet models successfully updated.")
+    if rmsnorm_test and requirements_test:
+        print("\n🎉 ALL TESTS PASSED! ResNet models successfully updated with RMSNorm and dropout.")
         sys.exit(0)
     else:
         print("\n⚠️  SOME TESTS FAILED!")
