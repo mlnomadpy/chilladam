@@ -15,7 +15,7 @@ from torchvision.transforms import (
     AutoAugmentPolicy,
     RandomErasing,
 )
-from datasets import load_dataset
+from datasets import load_dataset, IterableDataset
 
 
 # Dataset registry with Hugging Face dataset names and configurations
@@ -168,8 +168,11 @@ def get_data_loaders(dataset_name="tiny-imagenet", batch_size=64, image_size=Non
     val_dataset = val_dataset.map(transform_val_batch, batched=True, remove_columns=['image'])
     
     # Use HuggingFace tensor formatting for consistent batch shapes
-    train_dataset.set_format(type="torch", columns=["pixel_values", "label"])
-    val_dataset.set_format(type="torch", columns=["pixel_values", "label"])
+    # Note: IterableDataset objects don't have set_format method, only regular Dataset objects do
+    if not isinstance(train_dataset, IterableDataset):
+        train_dataset.set_format(type="torch", columns=["pixel_values", "label"])
+    if not isinstance(val_dataset, IterableDataset):
+        val_dataset.set_format(type="torch", columns=["pixel_values", "label"])
 
     # Create data loaders - no shuffle for train since streaming datasets handle shuffling differently
     train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=False, drop_last=True)
