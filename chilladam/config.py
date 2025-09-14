@@ -38,6 +38,12 @@ class Config:
         self.weight_decay = 0
         self.l1_lambda = 0  # L1 regularization strength (Lasso penalty)
         
+        # Learning rate scheduler configuration
+        self.use_scheduler = True  # Enable scheduler by default
+        self.scheduler = "cosine"  # Default to cosine annealing
+        self.t_max = None  # Will be set to num_epochs if not specified
+        self.eta_min = 1e-6  # Minimum learning rate for cosine annealing
+        
         # Data loading parameters
         self.shuffle_buffer_size = 10000  # Increased from default 1000 to better mix classes
         
@@ -103,6 +109,20 @@ def parse_args():
     parser.add_argument("--l1-lambda", type=float, default=0,
                        help="L1 regularization strength (Lasso penalty) for ChillAdam and ChillSGD")
     
+    # Learning rate scheduler arguments
+    parser.add_argument("--use-scheduler", action="store_true", default=True,
+                       help="Enable learning rate scheduler (default: True)")
+    parser.add_argument("--no-scheduler", dest="use_scheduler", action="store_false",
+                       help="Disable learning rate scheduler")
+    parser.add_argument("--scheduler", type=str, 
+                       choices=["cosine", "step", "exponential", "none"],
+                       default="cosine",
+                       help="Learning rate scheduler type (default: cosine)")
+    parser.add_argument("--t-max", type=int, default=None,
+                       help="Maximum number of iterations for cosine annealing (defaults to number of epochs)")
+    parser.add_argument("--eta-min", type=float, default=1e-6,
+                       help="Minimum learning rate for cosine annealing scheduler")
+    
     # Dataset arguments
     parser.add_argument("--image-size", type=int, default=None,
                        help="Image size for resizing (auto-detected based on dataset if not specified)")
@@ -139,6 +159,12 @@ def parse_args():
     config.max_lr = args.max_lr
     config.weight_decay = args.weight_decay
     config.l1_lambda = args.l1_lambda
+    
+    # Scheduler configuration
+    config.use_scheduler = args.use_scheduler
+    config.scheduler = args.scheduler if args.use_scheduler else "none"
+    config.t_max = args.t_max if args.t_max is not None else config.num_epochs
+    config.eta_min = args.eta_min
     
     # Wandb configuration
     config.use_wandb = args.use_wandb
@@ -213,6 +239,15 @@ def print_config(config):
             print(f"Momentum: {config.momentum}")
             print(f"Alpha: {config.alpha}")
     print(f"Weight Decay: {config.weight_decay}")
+    
+    # Scheduler configuration
+    print(f"Use Scheduler: {config.use_scheduler}")
+    if config.use_scheduler and config.scheduler != "none":
+        print(f"Scheduler: {config.scheduler.upper()}")
+        if config.scheduler == "cosine":
+            print(f"T_max (epochs): {config.t_max}")
+            print(f"Eta_min: {config.eta_min}")
+    
     print(f"Use Wandb: {config.use_wandb}")
     if config.use_wandb:
         print(f"Wandb Project: {config.wandb_project}")
