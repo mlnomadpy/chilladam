@@ -160,7 +160,14 @@ class Trainer:
             
             self.step_count += 1
         
-        return total_loss / num_samples
+        avg_train_loss = total_loss / num_samples
+        if self.use_wandb:
+            wandb.log({
+                "train/epoch_loss": avg_train_loss,
+                "epoch": epoch
+            }, step=self.step_count)
+            
+        return avg_train_loss
     
     def validate_epoch(self, val_dataloader, epoch=None):
         """
@@ -218,6 +225,17 @@ class Trainer:
         top1_accuracy = 100.0 * correct_top1 / total_predictions
         top5_accuracy = 100.0 * correct_top5 / total_predictions
         
+        # Log epoch metrics to wandb
+        if self.use_wandb:
+            log_dict = {
+                "val/epoch_loss": avg_loss,
+                "val/top1_accuracy": top1_accuracy,
+                "val/top5_accuracy": top5_accuracy,
+            }
+            if epoch is not None:
+                log_dict["epoch"] = epoch
+            wandb.log(log_dict, step=self.step_count)
+            
         return avg_loss, top1_accuracy, top5_accuracy
     
     def train(self, train_dataloader, val_dataloader, num_epochs):
@@ -245,16 +263,6 @@ class Trainer:
             print(f"Validation Loss: {val_loss:.4f}")
             print(f"Validation Top-1 Accuracy: {top1_accuracy:.2f}%")
             print(f"Validation Top-5 Accuracy: {top5_accuracy:.2f}%")
-            
-            # Log epoch metrics to wandb
-            if self.use_wandb:
-                wandb.log({
-                    "train/epoch_loss": train_loss,
-                    "val/epoch_loss": val_loss,
-                    "val/top1_accuracy": top1_accuracy,
-                    "val/top5_accuracy": top5_accuracy,
-                    "epoch": epoch + 1
-                }, step=self.step_count)
         
         # Log final test accuracy
         if self.use_wandb:
