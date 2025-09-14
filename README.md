@@ -83,6 +83,24 @@ python main.py --model yat_resnet18_no_se --dataset tiny-imagenet
 python main.py --model yat_resnet34_no_se --dataset food101 --optimizer adam --lr 0.001
 ```
 
+**New Model Naming (Programmatic Access)**
+
+The library now includes improved model naming conventions that can be imported directly:
+
+```python
+from chilladam import (
+    # New improved naming
+    se_resnet18, se_resnet34, se_resnet50,
+    yat_se_resnet18, yat_se_resnet34, yat_se_resnet50,
+    yat_resnet18_plain, yat_resnet34_plain, yat_resnet50_plain
+)
+
+# Create models using new naming
+model = se_resnet18(num_classes=200)  # Clean SE-ResNet naming
+model = yat_se_resnet18(num_classes=200)  # YAT with SE blocks
+model = yat_resnet18_plain(num_classes=200)  # YAT without SE, with LayerNorm
+```
+
 ### Dataset Options
 
 Train on different datasets with various optimizers:
@@ -151,9 +169,14 @@ python main.py --model yat_resnet18 \
 #### Model and Training Arguments
 - `--model`: Choose model architecture:
   - **Basic ResNet**: `resnet18`, `resnet50`
-  - **SE-ResNet**: `standard_se_resnet18`, `standard_se_resnet34`
-  - **YAT-ResNet (with SE)**: `yat_resnet18`, `yat_resnet34`
-  - **YAT-ResNet (no SE, with LayerNorm)**: `yat_resnet18_no_se`, `yat_resnet34_no_se`
+  - **SE-ResNet**: `standard_se_resnet18`, `standard_se_resnet34` (legacy naming, still supported)
+  - **YAT-ResNet (with SE)**: `yat_resnet18`, `yat_resnet34` (legacy naming, still supported)
+  - **YAT-ResNet (no SE, with LayerNorm)**: `yat_resnet18_no_se`, `yat_resnet34_no_se` (legacy naming, still supported)
+  
+  **Note**: The CLI currently supports legacy naming only. New improved model naming and ResNet-50 variants are available programmatically:
+  - **SE-ResNet (new)**: `se_resnet18`, `se_resnet34`, `se_resnet50`
+  - **YAT-ResNet with SE (new)**: `yat_se_resnet18`, `yat_se_resnet34`, `yat_se_resnet50`
+  - **YAT-ResNet plain (new)**: `yat_resnet18_plain`, `yat_resnet34_plain`, `yat_resnet50_plain`
   
   Default: `resnet18`
 - `--dataset`: Choose dataset: `tiny-imagenet`, `imagenet-1k`, `food101`, `stl10` (default: tiny-imagenet)
@@ -205,6 +228,47 @@ python main.py --model yat_resnet18 \
 | ImageNet-1k | 1000 | 224x224 | imagenet-1k |
 | Food-101 | 101 | 224x224 | food101 |
 | STL-10 | 10 | 96x96 | stl10 |
+
+## Model Naming
+
+ChillAdam has introduced improved model naming conventions for clarity and consistency:
+
+### New Naming Convention (Recommended)
+
+```python
+# Import new model names directly
+from chilladam import (
+    se_resnet18, se_resnet34, se_resnet50,           # SE-ResNet models
+    yat_se_resnet18, yat_se_resnet34, yat_se_resnet50,   # YAT with SE
+    yat_resnet18_plain, yat_resnet34_plain, yat_resnet50_plain  # YAT plain
+)
+```
+
+### Legacy Naming (Backward Compatible)
+
+The old naming convention is still supported for backward compatibility:
+
+```python
+# Legacy imports (still work)
+from chilladam import (
+    standard_se_resnet18, standard_se_resnet34,     # Maps to se_resnet*
+    yat_resnet18, yat_resnet34,                     # Maps to yat_se_resnet*
+    yat_resnet18_no_se, yat_resnet34_no_se         # Maps to yat_resnet*_plain
+)
+```
+
+### Naming Mapping
+
+| Legacy Name | New Name | Description |
+|-------------|----------|-------------|
+| `standard_se_resnet18` | `se_resnet18` | SE-ResNet-18 |
+| `standard_se_resnet34` | `se_resnet34` | SE-ResNet-34 |
+| `yat_resnet18` | `yat_se_resnet18` | YAT-ResNet-18 with SE |
+| `yat_resnet34` | `yat_se_resnet34` | YAT-ResNet-34 with SE |
+| `yat_resnet18_no_se` | `yat_resnet18_plain` | YAT-ResNet-18 plain |
+| `yat_resnet34_no_se` | `yat_resnet34_plain` | YAT-ResNet-34 plain |
+
+**Note**: The command-line interface (`main.py`) currently uses the legacy naming and supports models up to ResNet-34 variants. ResNet-50 models (`se_resnet50`, `yat_se_resnet50`, `yat_resnet50_plain`) and the new naming convention are available for programmatic use only.
 
 ## Architecture
 
@@ -259,22 +323,32 @@ Full implementations from scratch with multiple variants:
 - Adaptive architecture for different input sizes
 - Optimized for various image sizes (64x64 to 224x224)
 
+**Available**: `resnet18`, `resnet50` (both CLI and programmatic)
+
 #### SE-ResNet Models (Squeeze-and-Excitation)
 - **SE-ResNet-18**: ResNet-18 with SE blocks for channel-wise attention
 - **SE-ResNet-34**: ResNet-34 with SE blocks for improved feature representation
+- **SE-ResNet-50**: ResNet-50 with SE blocks for improved feature representation
 - SE blocks adaptively recalibrate channel-wise feature responses
 - Reduction ratio of 16 for efficient computation
+
+**New naming**: `se_resnet18`, `se_resnet34`, `se_resnet50`  
+**Legacy naming**: `standard_se_resnet18`, `standard_se_resnet34` (backward compatible)
 
 #### YAT-ResNet Models (Yet Another Transformation)
 ChillAdam includes advanced YAT-ResNet models powered by the Neural Masked Networks (nmn) package:
 
 **YAT-ResNet with SE blocks:**
-- **yat_resnet18**: YAT-based ResNet-18 with SE attention mechanism
-- **yat_resnet34**: YAT-based ResNet-34 with SE attention mechanism
+- **yat_se_resnet18**: YAT-based ResNet-18 with SE attention mechanism (new naming)
+- **yat_se_resnet34**: YAT-based ResNet-34 with SE attention mechanism (new naming)
+- **yat_se_resnet50**: YAT-based ResNet-50 with SE attention mechanism (new naming)
+- **Legacy**: `yat_resnet18`, `yat_resnet34` (backward compatible, map to SE variants)
 
 **YAT-ResNet without SE (LayerNorm variant):**
-- **yat_resnet18_no_se**: YAT-based ResNet-18 with LayerNorm after skip connections
-- **yat_resnet34_no_se**: YAT-based ResNet-34 with LayerNorm after skip connections
+- **yat_resnet18_plain**: YAT-based ResNet-18 with LayerNorm after skip connections (new naming)
+- **yat_resnet34_plain**: YAT-based ResNet-34 with LayerNorm after skip connections (new naming)
+- **yat_resnet50_plain**: YAT-based ResNet-50 with LayerNorm after skip connections (new naming)
+- **Legacy**: `yat_resnet18_no_se`, `yat_resnet34_no_se` (backward compatible)
 
 #### YAT Model Features
 - **Alpha Scaling**: Configurable with `use_alpha` parameter for adaptive feature scaling
@@ -284,13 +358,19 @@ ChillAdam includes advanced YAT-ResNet models powered by the Neural Masked Netwo
 
 ### Model Comparison
 
-| Model Family | Parameters (ImageNet) | Special Features |
-|-------------|----------------------|------------------|
-| ResNet-18 | ~11.2M | Basic residual connections |
-| ResNet-50 | ~23.5M | Deeper network with bottlenecks |
-| SE-ResNet-18 | ~11.3M | Channel attention with SE blocks |
-| YAT-ResNet-18 | ~11.3M | Advanced transformations + SE |
-| YAT-ResNet-18 (no SE) | ~11.2M | YAT transformations + LayerNorm |
+| Model Family | Parameters (ImageNet) | Special Features | New Naming | Legacy Naming |
+|-------------|----------------------|------------------|------------|---------------|
+| ResNet-18 | ~11.2M | Basic residual connections | `resnet18` | `resnet18` |
+| ResNet-50 | ~23.5M | Deeper network with bottlenecks | `resnet50` | `resnet50` |
+| SE-ResNet-18 | ~11.3M | Channel attention with SE blocks | `se_resnet18` | `standard_se_resnet18` |
+| SE-ResNet-34 | ~21.3M | Channel attention with SE blocks | `se_resnet34` | `standard_se_resnet34` |
+| SE-ResNet-50 | ~26.1M | Channel attention with SE blocks | `se_resnet50` | - |
+| YAT-ResNet-18 (SE) | ~11.3M | Advanced transformations + SE | `yat_se_resnet18` | `yat_resnet18` |
+| YAT-ResNet-34 (SE) | ~21.3M | Advanced transformations + SE | `yat_se_resnet34` | `yat_resnet34` |
+| YAT-ResNet-50 (SE) | ~26.1M | Advanced transformations + SE | `yat_se_resnet50` | - |
+| YAT-ResNet-18 (plain) | ~11.2M | YAT transformations + LayerNorm | `yat_resnet18_plain` | `yat_resnet18_no_se` |
+| YAT-ResNet-34 (plain) | ~21.3M | YAT transformations + LayerNorm | `yat_resnet34_plain` | `yat_resnet34_no_se` |
+| YAT-ResNet-50 (plain) | ~26.0M | YAT transformations + LayerNorm | `yat_resnet50_plain` | - |
 
 ## Example Output
 
