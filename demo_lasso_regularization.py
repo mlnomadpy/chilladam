@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """
-Demonstration script showing Lasso (L1) regularization in action.
+Demonstration script showing Lasso (L1) regularization in action using the new loss-based approach.
 
 This script creates a simple model and demonstrates that L1 regularization
-actually promotes sparsity in the weight matrices.
+actually promotes sparsity in the weight matrices. L1 regularization is now
+applied through the loss function rather than the optimizer.
 """
 
 import torch
@@ -16,12 +17,14 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'chilladam'))
 
 from optimizers.chilladam import ChillAdam
 from optimizers.chillsgd import ChillSGD
+from loss import add_l1_regularization, L1RegularizedLoss
 
 
 def demonstrate_lasso_regularization():
-    """Demonstrate Lasso regularization promoting sparsity"""
+    """Demonstrate Lasso regularization promoting sparsity using the new loss-based approach"""
     print("=" * 60)
     print("DEMONSTRATING LASSO (L1) REGULARIZATION FOR WEIGHT SPARSITY")
+    print("Using the new loss-based approach")
     print("=" * 60)
     
     # Set random seed for reproducibility
@@ -45,12 +48,16 @@ def demonstrate_lasso_regularization():
         for p1, p2 in zip(model_no_lasso.parameters(), model_with_lasso.parameters()):
             p2.copy_(p1)
     
-    # Create optimizers
-    optimizer_no_lasso = ChillAdam(model_no_lasso.parameters(), l1_lambda=0.0, min_lr=1e-4, max_lr=0.01)
-    optimizer_with_lasso = ChillAdam(model_with_lasso.parameters(), l1_lambda=0.01, min_lr=1e-4, max_lr=0.01)
+    # Create optimizers (no L1 in optimizers anymore)
+    optimizer_no_lasso = ChillAdam(model_no_lasso.parameters(), min_lr=1e-4, max_lr=0.01)
+    optimizer_with_lasso = ChillAdam(model_with_lasso.parameters(), min_lr=1e-4, max_lr=0.01)
     
-    print(f"Training without L1 regularization: l1_lambda = 0.0")
-    print(f"Training with L1 regularization: l1_lambda = 0.01")
+    # Create loss functions - this is the new approach!
+    criterion_no_lasso = nn.MSELoss()
+    criterion_with_lasso = L1RegularizedLoss(nn.MSELoss(), l1_lambda=0.01)
+    
+    print(f"Training without L1 regularization: using standard MSELoss")
+    print(f"Training with L1 regularization: using L1RegularizedLoss with l1_lambda = 0.01")
     print()
     
     # Generate some dummy regression data
@@ -65,14 +72,14 @@ def demonstrate_lasso_regularization():
         # Train model without L1 regularization
         optimizer_no_lasso.zero_grad()
         output_no_lasso = model_no_lasso(x)
-        loss_no_lasso = nn.MSELoss()(output_no_lasso, y)
+        loss_no_lasso = criterion_no_lasso(output_no_lasso, y)
         loss_no_lasso.backward()
         optimizer_no_lasso.step()
         
-        # Train model with L1 regularization
+        # Train model with L1 regularization - note the model parameter is passed to the loss
         optimizer_with_lasso.zero_grad()
         output_with_lasso = model_with_lasso(x)
-        loss_with_lasso = nn.MSELoss()(output_with_lasso, y)
+        loss_with_lasso = criterion_with_lasso(output_with_lasso, y, model_with_lasso)
         loss_with_lasso.backward()
         optimizer_with_lasso.step()
     
@@ -118,42 +125,71 @@ def demonstrate_lasso_regularization():
         print("ℹ️  L1 regularization effect may vary with different hyperparameters")
     
     print()
+    print("🆕 NEW APPROACH: L1 regularization is now implemented in the loss function!")
+    print("📖 Example usage:")
+    print("    from chilladam.loss import add_l1_regularization, L1RegularizedLoss")
+    print("    # Option 1: Function")
+    print("    loss = add_l1_regularization(base_loss, model, l1_lambda=0.01)")
+    print("    # Option 2: Class")
+    print("    criterion = L1RegularizedLoss(nn.MSELoss(), l1_lambda=0.01)")
+    print("    loss = criterion(outputs, targets, model)")
+    print()
     print("=" * 60)
     print("DEMONSTRATION COMPLETE")
     print("=" * 60)
 
 
 def test_both_optimizers():
-    """Test L1 regularization with both ChillAdam and ChillSGD"""
-    print("\nTesting L1 regularization with both optimizers...")
+    """Test L1 regularization with both ChillAdam and ChillSGD using the new loss-based approach"""
+    print("\nTesting L1 regularization with both optimizers using the new approach...")
     
     # Simple model
-    model = nn.Linear(20, 1)
+    model_adam = nn.Linear(20, 1)
+    model_sgd = nn.Linear(20, 1)
     
-    # Test ChillAdam
-    optimizer_adam = ChillAdam(model.parameters(), l1_lambda=0.02)
-    print(f"✓ ChillAdam with L1 lambda = {optimizer_adam.param_groups[0]['l1_lambda']}")
+    # Create optimizers (no L1 parameters)
+    optimizer_adam = ChillAdam(model_adam.parameters())
+    optimizer_sgd = ChillSGD(model_sgd.parameters())
     
-    # Test ChillSGD
-    optimizer_sgd = ChillSGD(model.parameters(), l1_lambda=0.03)
-    print(f"✓ ChillSGD with L1 lambda = {optimizer_sgd.param_groups[0]['l1_lambda']}")
+    # Create L1 regularized loss functions
+    criterion_adam = L1RegularizedLoss(nn.MSELoss(), l1_lambda=0.02)
+    criterion_sgd = L1RegularizedLoss(nn.MSELoss(), l1_lambda=0.03)
+    
+    print(f"✓ ChillAdam with L1RegularizedLoss (l1_lambda = {criterion_adam.get_l1_lambda()})")
+    print(f"✓ ChillSGD with L1RegularizedLoss (l1_lambda = {criterion_sgd.get_l1_lambda()})")
     
     # Quick training step to verify no errors
     x = torch.randn(10, 20)
     y = torch.randn(10, 1)
     
-    for optimizer in [optimizer_adam, optimizer_sgd]:
-        optimizer.zero_grad()
-        output = model(x)
-        loss = nn.MSELoss()(output, y)
-        loss.backward()
-        optimizer.step()
+    # Test ChillAdam
+    optimizer_adam.zero_grad()
+    output_adam = model_adam(x)
+    loss_adam = criterion_adam(output_adam, y, model_adam)
+    loss_adam.backward()
+    optimizer_adam.step()
     
-    print("✓ Both optimizers work correctly with L1 regularization")
+    # Test ChillSGD
+    optimizer_sgd.zero_grad()
+    output_sgd = model_sgd(x)
+    loss_sgd = criterion_sgd(output_sgd, y, model_sgd)
+    loss_sgd.backward()
+    optimizer_sgd.step()
+    
+    print("✓ Both optimizers work correctly with L1 regularization via loss function")
+    
+    # Demonstrate the functional approach too
+    print("\nDemonstrating the functional approach:")
+    base_loss = nn.MSELoss()(model_adam(x), y)
+    l1_loss = add_l1_regularization(base_loss, model_adam, l1_lambda=0.02)
+    print(f"✓ Functional approach: base_loss={base_loss.item():.4f}, l1_loss={l1_loss.item():.4f}")
+    
+    print("\n🔧 NEW API: L1 regularization is now controlled by loss functions, not optimizers!")
+    print("   This provides better separation of concerns and follows PyTorch conventions.")
 
 
 if __name__ == "__main__":
     demonstrate_lasso_regularization()
     test_both_optimizers()
     print("\n🎉 All demonstrations completed successfully!")
-    print("Lasso (L1) regularization is working for all weight matrices!")
+    print("Lasso (L1) regularization is now implemented in the loss function for better modularity!")

@@ -24,10 +24,9 @@ class ChillSGD(Optimizer):
         max_lr: maximum learning rate (default: 1.0)
         eps: term added to the denominator to improve numerical stability (default: 1e-8)
         weight_decay: weight decay (L2 penalty) (default: 0)
-        l1_lambda: L1 regularization strength (Lasso penalty) (default: 0)
     """
     
-    def __init__(self, params, min_lr=1e-5, max_lr=1.0, eps=1e-8, weight_decay=0, l1_lambda=0):
+    def __init__(self, params, min_lr=1e-5, max_lr=1.0, eps=1e-8, weight_decay=0):
         if not 0.0 <= min_lr:
             raise ValueError(f"Invalid min_lr: {min_lr}")
         if not 0.0 <= max_lr:
@@ -36,10 +35,8 @@ class ChillSGD(Optimizer):
             raise ValueError(f"Invalid eps: {eps}")
         if not 0.0 <= weight_decay:
             raise ValueError(f"Invalid weight_decay: {weight_decay}")
-        if not 0.0 <= l1_lambda:
-            raise ValueError(f"Invalid l1_lambda: {l1_lambda}")
 
-        defaults = dict(min_lr=min_lr, max_lr=max_lr, eps=eps, weight_decay=weight_decay, l1_lambda=l1_lambda)
+        defaults = dict(min_lr=min_lr, max_lr=max_lr, eps=eps, weight_decay=weight_decay)
         super(ChillSGD, self).__init__(params, defaults)
 
     @torch.no_grad()
@@ -56,7 +53,7 @@ class ChillSGD(Optimizer):
                 loss = closure()
 
         for group in self.param_groups:
-            min_lr, max_lr, eps, weight_decay, l1_lambda = group['min_lr'], group['max_lr'], group['eps'], group['weight_decay'], group['l1_lambda']
+            min_lr, max_lr, eps, weight_decay = group['min_lr'], group['max_lr'], group['eps'], group['weight_decay']
 
             for p in group['params']:
                 if p.grad is None:
@@ -69,10 +66,6 @@ class ChillSGD(Optimizer):
                 # Apply weight decay to gradient if specified
                 if weight_decay != 0:
                     grad = grad.add(p, alpha=weight_decay)
-                
-                # Apply L1 regularization (Lasso)
-                if l1_lambda != 0:
-                    grad = grad.add(torch.sign(p), alpha=l1_lambda)
 
                 # Chill mechanism 1: Normalize gradient by its L2 norm
                 grad_norm = grad.norm(p=2).clamp(min=eps)

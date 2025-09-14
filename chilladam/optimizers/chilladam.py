@@ -20,10 +20,9 @@ class ChillAdam(Optimizer):
         betas: coefficients used for computing running averages of gradient
                and its square (default: (0.9, 0.999))
         weight_decay: weight decay (L2 penalty) (default: 0)
-        l1_lambda: L1 regularization strength (Lasso penalty) (default: 0)
     """
     
-    def __init__(self, params, min_lr=1e-5, max_lr=1.0, eps=1e-8, betas=(0.9, 0.999), weight_decay=0, l1_lambda=0):
+    def __init__(self, params, min_lr=1e-5, max_lr=1.0, eps=1e-8, betas=(0.9, 0.999), weight_decay=0):
         if not 0.0 <= min_lr:
             raise ValueError(f"Invalid min_lr: {min_lr}")
         if not 0.0 <= max_lr:
@@ -36,10 +35,8 @@ class ChillAdam(Optimizer):
             raise ValueError(f"Invalid beta parameter at index 1: {betas[1]}")
         if not 0.0 <= weight_decay:
             raise ValueError(f"Invalid weight_decay: {weight_decay}")
-        if not 0.0 <= l1_lambda:
-            raise ValueError(f"Invalid l1_lambda: {l1_lambda}")
 
-        defaults = dict(min_lr=min_lr, max_lr=max_lr, eps=eps, betas=betas, weight_decay=weight_decay, l1_lambda=l1_lambda)
+        defaults = dict(min_lr=min_lr, max_lr=max_lr, eps=eps, betas=betas, weight_decay=weight_decay)
         super(ChillAdam, self).__init__(params, defaults)
 
     @torch.no_grad()
@@ -56,7 +53,7 @@ class ChillAdam(Optimizer):
                 loss = closure()
 
         for group in self.param_groups:
-            min_lr, max_lr, eps, betas, weight_decay, l1_lambda = group['min_lr'], group['max_lr'], group['eps'], group['betas'], group['weight_decay'], group['l1_lambda']
+            min_lr, max_lr, eps, betas, weight_decay = group['min_lr'], group['max_lr'], group['eps'], group['betas'], group['weight_decay']
 
             for p in group['params']:
                 if p.grad is None:
@@ -83,10 +80,6 @@ class ChillAdam(Optimizer):
 
                 if weight_decay != 0:
                     grad_normalized = grad_normalized.add(p, alpha=weight_decay)
-                
-                # Apply L1 regularization (Lasso)
-                if l1_lambda != 0:
-                    grad_normalized = grad_normalized.add(torch.sign(p), alpha=l1_lambda)
 
                 exp_avg.mul_(beta1).add_(grad_normalized, alpha=1 - beta1)
                 exp_avg_sq.mul_(beta2).addcmul_(grad_normalized, grad_normalized, value=1 - beta2)

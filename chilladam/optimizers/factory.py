@@ -29,8 +29,7 @@ def create_optimizer(optimizer_name, model_parameters, **kwargs):
             max_lr=kwargs.get('max_lr', 1.0),
             eps=kwargs.get('eps', 1e-8),
             betas=kwargs.get('betas', (0.9, 0.999)),
-            weight_decay=kwargs.get('weight_decay', 0),
-            l1_lambda=kwargs.get('l1_lambda', 0)
+            weight_decay=kwargs.get('weight_decay', 0)
         )
     
     elif optimizer_name == "chillsgd":
@@ -39,8 +38,7 @@ def create_optimizer(optimizer_name, model_parameters, **kwargs):
             min_lr=kwargs.get('min_lr', 1e-5),
             max_lr=kwargs.get('max_lr', 1.0),
             eps=kwargs.get('eps', 1e-8),
-            weight_decay=kwargs.get('weight_decay', 0),
-            l1_lambda=kwargs.get('l1_lambda', 0)
+            weight_decay=kwargs.get('weight_decay', 0)
         )
     
     elif optimizer_name == "adam":
