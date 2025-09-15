@@ -87,6 +87,10 @@ python main.py --model yat_resnet18_no_se --dataset tiny-imagenet
 
 # Larger YAT-ResNet variant
 python main.py --model yat_resnet34_no_se --dataset food101 --optimizer adam --lr 0.001
+
+# Vision Transformer models
+python main.py --model vit_base --dataset imagenet-1k --optimizer adamw --lr 0.0001
+python main.py --model vit_large --dataset food101 --optimizer adam --lr 0.00005
 ```
 
 **New Model Naming (Programmatic Access)**
@@ -98,13 +102,19 @@ from chilladam import (
     # New improved naming
     se_resnet18, se_resnet34, se_resnet50,
     yat_se_resnet18, yat_se_resnet34, yat_se_resnet50,
-    yat_resnet18_plain, yat_resnet34_plain, yat_resnet50_plain
+    yat_resnet18_plain, yat_resnet34_plain, yat_resnet50_plain,
+    # Vision Transformer models
+    vit_base, vit_large
 )
 
 # Create models using new naming
 model = se_resnet18(num_classes=200)  # Clean SE-ResNet naming
 model = yat_se_resnet18(num_classes=200)  # YAT with SE blocks
 model = yat_resnet18_plain(num_classes=200)  # YAT without SE, with LayerNorm
+
+# Vision Transformer models
+model = vit_base(num_classes=1000, img_size=224)  # ViT-Base for ImageNet
+model = vit_large(num_classes=100, img_size=384, drop_rate=0.1)  # ViT-Large with custom config
 ```
 
 ### Dataset Options
@@ -383,6 +393,29 @@ ChillAdam includes advanced YAT-ResNet models powered by the Neural Masked Netwo
 - **YatConv2d**: Advanced convolution layers from the nmn package
 - **YatNMN**: Neural masked network transformations for enhanced feature learning
 
+#### Vision Transformer (ViT) Models
+ChillAdam now includes Vision Transformer models based on "An Image is Worth 16x16 Words: Transformers for Image Recognition at Scale":
+
+**ViT-Base:**
+- **vit_base**: ViT-Base/16 model with 12 transformer layers, 768 embedding dimension, 12 attention heads
+- Standard patch size of 16x16 for 224x224 images  
+- ~86M parameters for ImageNet classification
+- Configurable input sizes, classes, and dropout rates
+
+**ViT-Large:**
+- **vit_large**: ViT-Large/16 model with 24 transformer layers, 1024 embedding dimension, 16 attention heads
+- Standard patch size of 16x16 for 224x224 images
+- ~304M parameters for ImageNet classification  
+- Configurable input sizes, classes, and dropout rates
+
+#### ViT Model Features
+- **Patch Embedding**: Converts image patches to token embeddings using convolution
+- **Multi-Head Attention**: Configurable number of heads with scaled dot-product attention
+- **Position Embedding**: Learned positional embeddings for spatial awareness
+- **Classification Token**: [CLS] token for final classification
+- **Layer Normalization**: Pre-norm transformer blocks for stable training
+- **Bias-Free Design**: Following ChillAdam patterns with bias=False in linear layers
+
 ### Model Comparison
 
 | Model Family | Parameters (ImageNet) | Special Features | New Naming | Legacy Naming |
@@ -398,6 +431,8 @@ ChillAdam includes advanced YAT-ResNet models powered by the Neural Masked Netwo
 | YAT-ResNet-18 (plain) | ~11.2M | YAT transformations + LayerNorm | `yat_resnet18_plain` | `yat_resnet18_no_se` |
 | YAT-ResNet-34 (plain) | ~21.3M | YAT transformations + LayerNorm | `yat_resnet34_plain` | `yat_resnet34_no_se` |
 | YAT-ResNet-50 (plain) | ~26.0M | YAT transformations + LayerNorm | `yat_resnet50_plain` | - |
+| ViT-Base/16 | ~86.5M | Vision Transformer with 12 layers | `vit_base` | - |
+| ViT-Large/16 | ~304.1M | Vision Transformer with 24 layers | `vit_large` | - |
 
 ## Example Output
 
