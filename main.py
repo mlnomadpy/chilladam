@@ -31,7 +31,8 @@ from chilladam import (
     standard_se_resnet18, standard_se_resnet34, standard_se_resnet50,
     yat_resnet18, yat_resnet34, yat_resnet50,
     yat_resnet18_no_se, yat_resnet34_no_se, yat_resnet50_no_se,
-    yat_se_resnet18, yat_se_resnet34, yat_se_resnet50
+    yat_se_resnet18, yat_se_resnet34, yat_se_resnet50,
+    vit_base, vit_large
 )
 from chilladam.optimizers import create_optimizer
 from chilladam.data import get_data_loaders
@@ -93,13 +94,20 @@ def create_model(model_name, num_classes, input_size):
     elif model_name == "yat_se_resnet50":
         print("Creating YAT SE-ResNet-50 model from scratch...")
         return yat_se_resnet50(num_classes=num_classes)
+    elif model_name == "vit_base":
+        print("Creating Vision Transformer Base model from scratch...")
+        return vit_base(num_classes=num_classes, img_size=input_size)
+    elif model_name == "vit_large":
+        print("Creating Vision Transformer Large model from scratch...")
+        return vit_large(num_classes=num_classes, img_size=input_size)
     else:
         supported_models = [
             "resnet18", "resnet50", 
             "standard_se_resnet18", "standard_se_resnet34", "standard_se_resnet50",
             "yat_resnet18", "yat_resnet34", "yat_resnet50", 
             "yat_resnet18_no_se", "yat_resnet34_no_se", "yat_resnet50_no_se",
-            "yat_se_resnet18", "yat_se_resnet34", "yat_se_resnet50"
+            "yat_se_resnet18", "yat_se_resnet34", "yat_se_resnet50",
+            "vit_base", "vit_large"
         ]
         raise ValueError(f"Unknown model: {model_name}. Choose from: {supported_models}")
 

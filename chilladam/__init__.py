@@ -16,7 +16,9 @@ from .models import (
     # Backward compatibility (current naming)
     standard_se_resnet18, standard_se_resnet34, standard_se_resnet50,
     yat_resnet18, yat_resnet34, yat_resnet50,
-    yat_resnet18_no_se, yat_resnet34_no_se, yat_resnet50_no_se
+    yat_resnet18_no_se, yat_resnet34_no_se, yat_resnet50_no_se,
+    # Vision Transformer models
+    vit_base, vit_large
 )
 
 __all__ = [
@@ -48,4 +50,7 @@ __all__ = [
     "yat_resnet18_no_se",
     "yat_resnet34_no_se",
     "yat_resnet50_no_se",
+    # Vision Transformer models
+    "vit_base",
+    "vit_large",
 ]
