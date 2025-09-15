@@ -43,6 +43,8 @@ class Config:
         self.scheduler = "cosine"  # Default to cosine annealing
         self.t_max = None  # Will be set to num_epochs if not specified
         self.eta_min = 1e-6  # Minimum learning rate for cosine annealing
+        self.total_epochs = None  # For cosine_warmup, defaults to num_epochs
+        self.warmup_epochs = 5  # Number of warmup epochs for cosine_warmup
         
         # Data loading parameters
         self.shuffle_buffer_size = 10000  # Increased from default 1000 to better mix classes
@@ -115,13 +117,17 @@ def parse_args():
     parser.add_argument("--no-scheduler", dest="use_scheduler", action="store_false",
                        help="Disable learning rate scheduler")
     parser.add_argument("--scheduler", type=str, 
-                       choices=["cosine", "step", "exponential", "none"],
+                       choices=["cosine", "step", "exponential", "cosine_warmup", "none"],
                        default="cosine",
                        help="Learning rate scheduler type (default: cosine)")
     parser.add_argument("--t-max", type=int, default=None,
                        help="Maximum number of iterations for cosine annealing (defaults to number of epochs)")
     parser.add_argument("--eta-min", type=float, default=1e-6,
                        help="Minimum learning rate for cosine annealing scheduler")
+    parser.add_argument("--total-epochs", type=int, default=None,
+                       help="Total epochs for cosine_warmup scheduler (defaults to --epochs)")
+    parser.add_argument("--warmup-epochs", type=int, default=5,
+                       help="Number of warmup epochs for cosine_warmup scheduler")
     
     # Dataset arguments
     parser.add_argument("--image-size", type=int, default=None,
@@ -165,6 +171,8 @@ def parse_args():
     config.scheduler = args.scheduler if args.use_scheduler else "none"
     config.t_max = args.t_max if args.t_max is not None else config.num_epochs
     config.eta_min = args.eta_min
+    config.total_epochs = args.total_epochs if args.total_epochs is not None else config.num_epochs
+    config.warmup_epochs = args.warmup_epochs
     
     # Wandb configuration
     config.use_wandb = args.use_wandb

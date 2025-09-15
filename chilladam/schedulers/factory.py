@@ -3,6 +3,7 @@ Scheduler factory for creating different learning rate schedulers based on confi
 """
 
 import torch.optim.lr_scheduler as lr_scheduler
+from .cosine_warmup import CosineAnnealingWarmupScheduler
 
 
 def create_scheduler(scheduler_name, optimizer, **kwargs):
@@ -50,9 +51,17 @@ def create_scheduler(scheduler_name, optimizer, **kwargs):
             eta_min=kwargs.get('eta_min', 1e-6)
         )
     
+    elif scheduler_name == "cosine_warmup":
+        return CosineAnnealingWarmupScheduler(
+            optimizer,
+            total_epochs=kwargs.get('total_epochs', 100),
+            warmup_epochs=kwargs.get('warmup_epochs', 10),
+            eta_min=kwargs.get('eta_min', 1e-6)
+        )
+    
     else:
         raise ValueError(f"Unsupported scheduler: {scheduler_name}. "
-                        f"Supported schedulers: cosine, step, exponential, cosine_warm_restarts, none")
+                        f"Supported schedulers: cosine, step, exponential, cosine_warm_restarts, cosine_warmup, none")
 
 
 def get_scheduler_info():
@@ -67,5 +76,6 @@ def get_scheduler_info():
         "step": "Step Learning Rate scheduler",
         "exponential": "Exponential Learning Rate scheduler", 
         "cosine_warm_restarts": "Cosine Annealing with Warm Restarts",
+        "cosine_warmup": "Cosine Annealing with Linear Warmup",
         "none": "No scheduler (constant learning rate)"
     }

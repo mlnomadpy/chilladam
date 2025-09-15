@@ -148,13 +148,24 @@ def main():
         scheduler = None
         if config.use_scheduler and config.scheduler != "none":
             print(f"Setting up {config.scheduler.upper()} learning rate scheduler...")
-            scheduler = create_scheduler(
-                scheduler_name=config.scheduler,
-                optimizer=optimizer,
-                t_max=config.t_max,
-                eta_min=config.eta_min
-            )
-            print(f"Scheduler will run for {config.t_max} epochs with eta_min={config.eta_min}")
+            
+            scheduler_kwargs = {
+                'scheduler_name': config.scheduler,
+                'optimizer': optimizer,
+                'eta_min': config.eta_min
+            }
+            
+            if config.scheduler == "cosine_warmup":
+                scheduler_kwargs.update({
+                    'total_epochs': config.total_epochs,
+                    'warmup_epochs': config.warmup_epochs
+                })
+                print(f"Cosine warmup scheduler: {config.warmup_epochs} warmup epochs, then cosine annealing for {config.total_epochs - config.warmup_epochs} epochs")
+            else:
+                scheduler_kwargs['t_max'] = config.t_max
+                print(f"Scheduler will run for {config.t_max} epochs with eta_min={config.eta_min}")
+            
+            scheduler = create_scheduler(**scheduler_kwargs)
         else:
             print("No learning rate scheduler enabled")
         
@@ -186,8 +197,10 @@ def main():
                 'device': config.device,
                 'use_scheduler': config.use_scheduler,
                 'scheduler': config.scheduler if config.use_scheduler else None,
-                't_max': config.t_max if config.use_scheduler and config.scheduler == 'cosine' else None,
-                'eta_min': config.eta_min if config.use_scheduler and config.scheduler == 'cosine' else None,
+                't_max': config.t_max if config.use_scheduler and config.scheduler in ['cosine'] else None,
+                'eta_min': config.eta_min if config.use_scheduler and config.scheduler in ['cosine', 'cosine_warmup'] else None,
+                'total_epochs': config.total_epochs if config.use_scheduler and config.scheduler == 'cosine_warmup' else None,
+                'warmup_epochs': config.warmup_epochs if config.use_scheduler and config.scheduler == 'cosine_warmup' else None,
                 'wandb_watch': config.wandb_watch,
                 'wandb_watch_log_freq': config.wandb_watch_log_freq
             }
