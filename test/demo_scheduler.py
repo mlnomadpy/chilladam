@@ -47,12 +47,21 @@ def demonstrate_scheduler(optimizer_name, scheduler_name="cosine", epochs=20):
         )
     
     # Create scheduler
-    scheduler = create_scheduler(
-        scheduler_name,
-        optimizer,
-        t_max=epochs,
-        eta_min=1e-6
-    )
+    if scheduler_name == "cosine_warmup":
+        scheduler = create_scheduler(
+            scheduler_name,
+            optimizer,
+            total_epochs=epochs,
+            warmup_epochs=max(1, epochs // 4),  # 25% warmup
+            eta_min=1e-6
+        )
+    else:
+        scheduler = create_scheduler(
+            scheduler_name,
+            optimizer,
+            t_max=epochs,
+            eta_min=1e-6
+        )
     
     learning_rates = []
     
@@ -89,6 +98,9 @@ def main():
         ("adam", "cosine"),
         ("sgd", "cosine"),
         ("chilladam", "cosine"),
+        ("adam", "cosine_warmup"),
+        ("sgd", "cosine_warmup"),
+        ("chilladam", "cosine_warmup"),
         ("adam", "step"),
         ("adam", "exponential"),
     ]
@@ -107,12 +119,14 @@ def main():
     print("SUMMARY")
     print(f"{'='*50}")
     print("✅ Cosine annealing scheduler successfully implemented")
+    print("✅ Cosine warmup scheduler with linear warmup phase implemented")
     print("✅ Works with ChillAdam, Adam, SGD, and other optimizers")
-    print("✅ Supports multiple scheduler types: cosine, step, exponential")
+    print("✅ Supports multiple scheduler types: cosine, cosine_warmup, step, exponential")
     print("✅ Backward compatible - existing code works unchanged")
     print("✅ Configurable via command line arguments")
     print("\nTo use in training:")
     print("  python main.py --scheduler cosine --t-max 10 --eta-min 1e-6")
+    print("  python main.py --scheduler cosine_warmup --total-epochs 50 --warmup-epochs 10")
     print("  python main.py --no-scheduler  # Disable scheduler")
     print("  python main.py --scheduler step --step-size 5 --gamma 0.1")
 

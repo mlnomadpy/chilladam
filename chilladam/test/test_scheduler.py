@@ -135,5 +135,43 @@ def test_exponential_scheduler():
     assert optimizer.param_groups[0]['lr'] == initial_lr * 0.95
 
 
+def test_cosine_warmup_scheduler():
+    """Test cosine warmup scheduler creation and functionality."""
+    model = SimpleModel()
+    optimizer = torch.optim.Adam(model.parameters(), lr=0.1)
+    scheduler = create_scheduler(
+        "cosine_warmup", 
+        optimizer, 
+        total_epochs=10, 
+        warmup_epochs=3, 
+        eta_min=1e-6
+    )
+    
+    assert scheduler is not None
+    
+    # Test initial state (should be 0 with warmup)
+    assert optimizer.param_groups[0]['lr'] == 0.0
+    
+    # Test warmup phase
+    scheduler.step()  # epoch 0
+    lr_epoch_0 = optimizer.param_groups[0]['lr']
+    assert lr_epoch_0 > 0 and lr_epoch_0 < 0.1
+    
+    scheduler.step()  # epoch 1 
+    lr_epoch_1 = optimizer.param_groups[0]['lr']
+    assert lr_epoch_1 > lr_epoch_0
+    
+    scheduler.step()  # epoch 2 (end of warmup)
+    lr_epoch_2 = optimizer.param_groups[0]['lr']
+    assert lr_epoch_1 < lr_epoch_2 <= 0.1
+
+
+def test_cosine_warmup_scheduler_info():
+    """Test that cosine_warmup scheduler appears in info."""
+    info = get_scheduler_info()
+    assert "cosine_warmup" in info
+    assert "Linear Warmup" in info["cosine_warmup"]
+
+
 if __name__ == "__main__":
     pytest.main([__file__])
