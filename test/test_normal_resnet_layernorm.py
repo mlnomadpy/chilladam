@@ -19,7 +19,7 @@ import torch.nn as nn
 import importlib.util
 
 # Load resnet.py directly
-resnet_path = '/home/runner/work/chilladam/chilladam/chilladam/models/resnet.py'
+resnet_path = os.path.join(os.path.dirname(__file__), '..', 'chilladam', 'models', 'resnet.py')
 spec = importlib.util.spec_from_file_location("resnet", resnet_path)
 resnet_module = importlib.util.module_from_spec(spec)
 sys.modules["resnet"] = resnet_module

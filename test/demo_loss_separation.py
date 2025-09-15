@@ -11,7 +11,7 @@ import sys
 import os
 
 # Add chilladam to path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'chilladam'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'chilladam'))
 
 from chilladam.optimizers.chilladam import ChillAdam
 from chilladam.training.trainer import Trainer

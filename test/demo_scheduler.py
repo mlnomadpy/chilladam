@@ -9,7 +9,7 @@ import sys
 import os
 
 # Add the chilladam package to the path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'chilladam'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'chilladam'))
 
 from chilladam.optimizers import create_optimizer
 from chilladam.schedulers import create_scheduler
