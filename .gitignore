@@ -74,3 +74,7 @@ test_iterable_dataset.py
 test_streaming_dataset_fix.py
 test_simple_fix_validation.py
 demo_streaming_fix.py
+
+# Model profiling results
+*.csv
+model_profiling_results.*
