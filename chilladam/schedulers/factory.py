@@ -56,7 +56,9 @@ def create_scheduler(scheduler_name, optimizer, **kwargs):
             optimizer,
             total_epochs=kwargs.get('total_epochs', 100),
             warmup_epochs=kwargs.get('warmup_epochs', 10),
-            eta_min=kwargs.get('eta_min', 1e-6)
+            cosine_epochs=kwargs.get('cosine_epochs', None),
+            eta_min=kwargs.get('eta_min', 1e-6),
+            final_lr=kwargs.get('final_lr', None)
         )
     
     else:
@@ -76,6 +78,6 @@ def get_scheduler_info():
         "step": "Step Learning Rate scheduler",
         "exponential": "Exponential Learning Rate scheduler", 
         "cosine_warm_restarts": "Cosine Annealing with Warm Restarts",
-        "cosine_warmup": "Cosine Annealing with Linear Warmup",
+        "cosine_warmup": "Cosine Annealing with Linear Warmup and optional Linear Decay",
         "none": "No scheduler (constant learning rate)"
     }
