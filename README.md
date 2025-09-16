@@ -225,6 +225,30 @@ python main.py --model yat_resnet18 \
 - `--max-lr`: Maximum learning rate for ChillAdam and ChillSGD (default: 1.0)
 - `--l1-lambda`: L1 regularization strength (Lasso penalty) for ChillAdam and ChillSGD (default: 0)
 
+#### Learning Rate Scheduler Arguments
+- `--use-scheduler`: Enable learning rate scheduler (default: enabled)
+- `--no-scheduler`: Disable learning rate scheduler
+- `--scheduler`: Scheduler type: `cosine`, `cosine_warmup`, `cosine_warm_restarts`, `step`, `exponential`, `none` (default: cosine)
+
+**Cosine Annealing Scheduler:**
+- `--t-max`: Maximum iterations for cosine annealing (default: number of epochs)
+- `--eta-min`: Minimum learning rate (default: 1e-6)
+
+**Enhanced Cosine Warmup Scheduler:**
+- `--total-epochs`: Total epochs per cycle (default: number of epochs)
+- `--warmup-epochs`: Warmup phase duration (default: 5)
+- `--linear-decay-epochs`: Optional linear decay phase duration (default: 0)
+- `--final-lr`: Final LR after linear decay (default: same as eta-min)
+- `--no-restart`: Disable restart behavior (default: restart enabled)
+
+**Step Scheduler:**
+- `--step-size`: Epoch interval for LR decay (default: 10)
+- `--gamma`: LR decay factor (default: 0.1)
+
+**Cosine Warm Restarts:**
+- `--t-0`: Initial restart period (default: 10)
+- `--t-mult`: Period multiplication factor (default: 1)
+
 #### Weights & Biases Arguments
 - `--use-wandb`: Enable Weights & Biases logging (default: disabled)
 - `--wandb-project`: Wandb project name (default: "chilladam-training")
@@ -347,6 +371,92 @@ All standard PyTorch optimizers are supported with their native parameters:
 - **SGD**: Stochastic Gradient Descent with optional momentum
 - **RMSprop**: Root Mean Square Propagation
 - **Adamax, NAdam, RAdam**: Advanced Adam variants
+
+## Learning Rate Schedulers
+
+ChillAdam provides comprehensive learning rate scheduling with advanced features including warmup, restart behavior, and optional linear decay phases.
+
+### Scheduler Types
+
+| Scheduler | Description | Key Features |
+|-----------|-------------|--------------|
+| **cosine** | Standard cosine annealing | Smooth LR decay following cosine curve |
+| **cosine_warmup** | Enhanced cosine with warmup and restart | Linear warmup + cosine + optional linear decay + restart cycles |
+| **cosine_warm_restarts** | PyTorch's cosine warm restarts | Periodic restart with cosine annealing |
+| **step** | Step decay scheduler | LR decay at fixed intervals |
+| **exponential** | Exponential decay scheduler | Exponential LR decay |
+| **none** | No scheduler | Constant learning rate |
+
+### Enhanced Cosine Warmup Scheduler
+
+The `cosine_warmup` scheduler provides advanced functionality with three distinct phases:
+
+#### Phase Structure
+1. **Linear Warmup**: Gradually increase LR from 0 to base LR over `warmup_epochs`
+2. **Cosine Annealing**: Smooth cosine decay from base LR to `eta_min`
+3. **Linear Decay (Optional)**: Further linear decrease from `eta_min` to `final_lr`
+
+#### Key Features
+- **Restart Behavior**: Automatically restart cycles after `total_epochs` (configurable)
+- **Linear Decay Phase**: Optional additional decay phase for ultra-low learning rates
+- **Flexible Configuration**: Customize each phase duration independently
+- **No Restart Mode**: Continue cosine schedule indefinitely without restarting
+
+### Scheduler Usage Examples
+
+```bash
+# Basic cosine annealing
+python main.py --scheduler cosine --t-max 50 --eta-min 1e-6
+
+# Enhanced cosine with warmup and restart
+python main.py --scheduler cosine_warmup --total-epochs 50 --warmup-epochs 10 --eta-min 1e-6
+
+# Cosine warmup with linear decay phase
+python main.py --scheduler cosine_warmup \
+               --total-epochs 60 \
+               --warmup-epochs 10 \
+               --linear-decay-epochs 15 \
+               --eta-min 1e-3 \
+               --final-lr 1e-7
+
+# Cosine warmup without restart (continuous schedule)
+python main.py --scheduler cosine_warmup \
+               --total-epochs 30 \
+               --warmup-epochs 5 \
+               --no-restart
+
+# PyTorch cosine warm restarts
+python main.py --scheduler cosine_warm_restarts --t-0 10 --t-mult 2
+
+# Step scheduler
+python main.py --scheduler step --step-size 10 --gamma 0.1
+
+# No scheduler (constant LR)
+python main.py --no-scheduler
+```
+
+### Scheduler Parameters
+
+#### Cosine Warmup Scheduler Parameters
+- `--total-epochs`: Total epochs per cycle (defaults to `--epochs`)
+- `--warmup-epochs`: Linear warmup phase duration (default: 5)
+- `--linear-decay-epochs`: Optional linear decay phase duration (default: 0)
+- `--eta-min`: Minimum LR after cosine phase (default: 1e-6)
+- `--final-lr`: Final LR after linear decay (defaults to `eta-min`)
+- `--no-restart`: Disable cycle restart behavior
+
+#### Other Scheduler Parameters
+- `--t-max`: Period for cosine/cosine_warm_restarts (defaults to `--epochs`)
+- `--step-size`: Step interval for step scheduler (default: 10)
+- `--gamma`: Decay factor for step/exponential schedulers (default: 0.1/0.95)
+
+### Scheduler Integration
+
+All schedulers integrate seamlessly with:
+- **ChillAdam and ChillSGD optimizers**: Automatic compatibility
+- **Standard PyTorch optimizers**: Adam, SGD, AdamW, etc.
+- **Weights & Biases logging**: Automatic LR tracking
+- **Training resumption**: State preservation across restarts
 
 ## Model Architectures
 
