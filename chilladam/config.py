@@ -46,6 +46,11 @@ class Config:
         self.total_epochs = None  # For cosine_warmup, defaults to num_epochs
         self.warmup_epochs = 5  # Number of warmup epochs for cosine_warmup
         
+        # New cosine_warmup scheduler features
+        self.linear_decay_epochs = 0  # Optional linear decay phase epochs
+        self.final_lr = None  # Final learning rate after linear decay (defaults to eta_min)
+        self.restart = True  # Whether to restart cycles in cosine_warmup scheduler
+        
         # Data loading parameters
         self.shuffle_buffer_size = 10000  # Increased from default 1000 to better mix classes
         
@@ -118,7 +123,7 @@ def parse_args():
     parser.add_argument("--no-scheduler", dest="use_scheduler", action="store_false",
                        help="Disable learning rate scheduler")
     parser.add_argument("--scheduler", type=str, 
-                       choices=["cosine", "step", "exponential", "cosine_warmup", "none"],
+                       choices=["cosine", "step", "exponential", "cosine_warm_restarts", "cosine_warmup", "none"],
                        default="cosine",
                        help="Learning rate scheduler type (default: cosine)")
     parser.add_argument("--t-max", type=int, default=None,
@@ -129,6 +134,14 @@ def parse_args():
                        help="Total epochs for cosine_warmup scheduler (defaults to --epochs)")
     parser.add_argument("--warmup-epochs", type=int, default=5,
                        help="Number of warmup epochs for cosine_warmup scheduler")
+    
+    # New cosine_warmup scheduler arguments
+    parser.add_argument("--linear-decay-epochs", type=int, default=0,
+                       help="Number of epochs for optional linear decay phase in cosine_warmup scheduler")
+    parser.add_argument("--final-lr", type=float, default=None,
+                       help="Final learning rate after linear decay phase (defaults to eta-min)")
+    parser.add_argument("--no-restart", dest="restart", action="store_false", default=True,
+                       help="Disable restart behavior in cosine_warmup scheduler")
     
     # Dataset arguments
     parser.add_argument("--image-size", type=int, default=None,
@@ -174,6 +187,11 @@ def parse_args():
     config.eta_min = args.eta_min
     config.total_epochs = args.total_epochs if args.total_epochs is not None else config.num_epochs
     config.warmup_epochs = args.warmup_epochs
+    
+    # New cosine_warmup scheduler configuration
+    config.linear_decay_epochs = args.linear_decay_epochs
+    config.final_lr = args.final_lr
+    config.restart = args.restart
     
     # Wandb configuration
     config.use_wandb = args.use_wandb

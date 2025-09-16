@@ -163,7 +163,8 @@ def test_cosine_warmup_scheduler():
     
     scheduler.step()  # epoch 2 (end of warmup)
     lr_epoch_2 = optimizer.param_groups[0]['lr']
-    assert lr_epoch_1 < lr_epoch_2 <= 0.1
+    assert lr_epoch_1 < lr_epoch_2  # Should increase during warmup
+    assert lr_epoch_2 <= 0.1  # Should not exceed base LR
 
 
 def test_cosine_warmup_scheduler_info():
