@@ -166,9 +166,28 @@ def main():
             if config.scheduler == "cosine_warmup":
                 scheduler_kwargs.update({
                     'total_epochs': config.total_epochs,
-                    'warmup_epochs': config.warmup_epochs
+                    'warmup_epochs': config.warmup_epochs,
+                    'linear_decay_epochs': config.linear_decay_epochs,
+                    'final_lr': config.final_lr,
+                    'restart': config.restart
                 })
-                print(f"Cosine warmup scheduler: {config.warmup_epochs} warmup epochs, then cosine annealing for {config.total_epochs - config.warmup_epochs} epochs")
+                # Calculate phases for better logging
+                cosine_epochs = config.total_epochs - config.warmup_epochs - config.linear_decay_epochs
+                phases = []
+                if config.warmup_epochs > 0:
+                    phases.append(f"{config.warmup_epochs} warmup")
+                if cosine_epochs > 0:
+                    phases.append(f"{cosine_epochs} cosine")
+                if config.linear_decay_epochs > 0:
+                    phases.append(f"{config.linear_decay_epochs} linear decay")
+                
+                phase_desc = " + ".join(phases) + f" epochs"
+                restart_desc = " (with restart)" if config.restart else " (no restart)"
+                print(f"Cosine warmup scheduler: {phase_desc}{restart_desc}")
+                
+                if config.linear_decay_epochs > 0:
+                    final_lr_val = config.final_lr if config.final_lr is not None else config.eta_min
+                    print(f"  Linear decay: {config.eta_min} → {final_lr_val}")
             else:
                 scheduler_kwargs['t_max'] = config.t_max
                 print(f"Scheduler will run for {config.t_max} epochs with eta_min={config.eta_min}")
@@ -209,6 +228,9 @@ def main():
                 'eta_min': config.eta_min if config.use_scheduler and config.scheduler in ['cosine', 'cosine_warmup'] else None,
                 'total_epochs': config.total_epochs if config.use_scheduler and config.scheduler == 'cosine_warmup' else None,
                 'warmup_epochs': config.warmup_epochs if config.use_scheduler and config.scheduler == 'cosine_warmup' else None,
+                'linear_decay_epochs': config.linear_decay_epochs if config.use_scheduler and config.scheduler == 'cosine_warmup' and config.linear_decay_epochs > 0 else None,
+                'final_lr': config.final_lr if config.use_scheduler and config.scheduler == 'cosine_warmup' and config.final_lr is not None else None,
+                'restart': config.restart if config.use_scheduler and config.scheduler == 'cosine_warmup' else None,
                 'wandb_watch': config.wandb_watch,
                 'wandb_watch_log_freq': config.wandb_watch_log_freq
             }

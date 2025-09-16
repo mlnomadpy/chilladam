@@ -56,7 +56,11 @@ def create_scheduler(scheduler_name, optimizer, **kwargs):
             optimizer,
             total_epochs=kwargs.get('total_epochs', 100),
             warmup_epochs=kwargs.get('warmup_epochs', 10),
-            eta_min=kwargs.get('eta_min', 1e-6)
+            eta_min=kwargs.get('eta_min', 1e-6),
+            linear_decay_epochs=kwargs.get('linear_decay_epochs', 0),
+            final_lr=kwargs.get('final_lr', None),
+            restart=kwargs.get('restart', True),
+            last_epoch=kwargs.get('last_epoch', -1)
         )
     
     else:
