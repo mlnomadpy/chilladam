@@ -82,8 +82,7 @@ class ChillAdam(Optimizer):
                 bias_correction1 = 1 - beta1 ** state['step']
                 bias_correction2 = 1 - beta2 ** state['step']
 
-                grad_norm = grad.norm(p=2).clamp(min=eps)
-                grad_normalized = grad / grad_norm
+                grad_normalized = grad 
 
                 if weight_decay != 0:
                     grad_normalized = grad_normalized.add(p, alpha=weight_decay)
