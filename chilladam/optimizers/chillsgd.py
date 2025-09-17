@@ -74,9 +74,8 @@ class ChillSGD(Optimizer):
                 if weight_decay != 0:
                     grad = grad.add(p, alpha=weight_decay)
 
-                # Chill mechanism 1: Normalize gradient by its L2 norm
-                grad_norm = grad.norm(p=2).clamp(min=eps)
-                grad_normalized = grad / grad_norm
+                # Chill mechanism 1:
+                grad_normalized = grad 
 
                 # Chill mechanism 2: Use inverse of parameter norm as learning rate
                 param_norm = p.norm(p=2).clamp(min=eps)
